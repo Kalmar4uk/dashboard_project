@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import User, Team, Employee
 
 
 @admin.register(User)
@@ -46,6 +46,20 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email',)
     ordering = ('date_accession',)
 
+
+admin.site.register(Employee)
+
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'create_date'
+    )
+    fieldsets = (
+        (None, {'fields': (
+            'name', 'create_date'
+        )}),)
+    readonly_fields = ('create_date',)
 
 # @admin.register(LevelSpeciality)
 # class LevelSpecialityAdmin(admin.ModelAdmin):

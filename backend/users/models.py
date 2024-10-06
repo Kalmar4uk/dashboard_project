@@ -21,19 +21,19 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name}'
 
 
-# class LevelSpeciality(models.Model):
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='level',
-#         verbose_name='Сотрудник'
-#     )
-#     name = models.CharField('Название уровня', max_length=50)
-#     order_level = models.PositiveSmallIntegerField('Порядок уровня')
+class Team(models.Model):
+    '''Модель команды.'''
+    name = models.CharField('Название команды', max_length=50)
+    create_date = models.DateTimeField('Дата создания команды', auto_now_add=True)
 
-#     class Meta:
-#         verbose_name = 'Уровень специальности'
-#         verbose_name_plural = 'Уровни специальности'
+    def __str__(self) -> str:
+        return self.name
 
-#     def __str__(self) -> str:
-#         return self.name
+
+# по поводу этой модельки стоит еще подумать, наверное, завтра удалю её
+class Employee(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user} - {self.team}'
