@@ -12,8 +12,13 @@ class Skills(models.Model):
     '''Модель навыка.'''
     name = models.CharField('Название навыка', max_length=100)
     domen = models.CharField('Тип навыка', max_length=15, choices=SKILLS)
-    skill_score = models.FloatField('Минимальная оценка навыка')
+    # указал дефолтное значение для оценки
+    skill_score = models.FloatField('Минимальная оценка навыка', default=1)
     # тут минимальная оценка должна тем числом, которое можно минимально указать в модели EmployeeSkills в Уровне навыка
+
+    class Meta:
+        verbose_name = 'Навык'
+        verbose_name_plural = 'Навыки'
 
     def __str__(self) -> str:
         return self.name
@@ -21,9 +26,17 @@ class Skills(models.Model):
 
 class EmployeeSkills(models.Model):
     '''Модель навыков сотрудника.'''
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Сотрудник')
-    competence = models.ForeignKey(Skills, on_delete=models.CASCADE, verbose_name='Навык')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name='Сотрудник'
+    )
+    competence = models.ForeignKey(
+        Skills, on_delete=models.CASCADE, verbose_name='Навык'
+    )
     competence_score = models.FloatField('Уровень навыка')
+
+    class Meta:
+        verbose_name = 'Навык сотрудника'
+        verbose_name_plural = 'Навыки сотрудников'
 
     def __str__(self) -> str:
         return f'{self.user} оценен по навыку {self.competence}'
@@ -31,6 +44,22 @@ class EmployeeSkills(models.Model):
 
 class Evaluation(models.Model):
     '''Модель оценки.'''
+    # Добавил сотрудников
+    employee = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        verbose_name='Сотрудник',
+        related_name='user'
+    )
+    # Вопрос с Оценившим, кажется, что если оценивший сотрудник
+    # уйдет из компании его оценка все равно должна остаться
+    # поставил Set_null, можно подумать как прикрутить Set_default
+    appreciated = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Оценивший',
+        related_name='appreciated'
+    )
     date_evaluation = models.DateField('Дата оценки', auto_now_add=True)
     # type_evaluation Тип оценки? Какой тип поля и зачем оно?
     value_evaluation = models.PositiveSmallIntegerField(
@@ -40,60 +69,24 @@ class Evaluation(models.Model):
     comment = models.TextField('Комментарий оценки',)
     accordance = models.BooleanField('Соответствие', default=False)
 
+    class Meta:
+        verbose_name = 'Оценка'
+        verbose_name_plural = 'Оценки'
+
     def __str__(self) -> str:
         return f'{self.comment} - {self.value_evaluation}'
 
 
 class IndividualDevelopmentPlan(models.Model):
     '''Модель индивидуального плана развития.'''
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Сотрудник')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name='Сотрудник'
+    )
     target = models.CharField('Цель', max_length=50)
     start_date = models.DateField('Дата начала', auto_now_add=True)
     end_date = models.DateField('Дата окончания',)
     status = models.CharField('Статус', max_length=15)
 
-
-
-
-
-
-# class Competence(models.Model):
-#     '''Компетенции.'''
-#     skill = models.CharField('Навык', max_length=100)
-#     competence = models.CharField('Компетенция', max_length=100)
-#     domen = models.CharField('Домен', max_length=15, choices=SKILLS)
-
-#     def __str__(self) -> str:
-#         return self.competence
-
-
-# class CompetenceUser(models.Model):
-#     '''Компетенции сотрудника.'''
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Сотрудник')
-#     competence = models.ForeignKey(Competence, on_delete=models.CASCADE, verbose_name='Компетенция')
-#     date_passage = models.DateField('Дата прохождения', auto_now_add=True)
-
-#     def __str__(self) -> str:
-#         return f'Комепетенция {self.user}'
-
-
-# class CompetencyAssessment(models.Model):
-#     '''Оценка компетенций.'''
-#     assessment = models.PositiveSmallIntegerField(
-#         'Оценка',
-#         validators=(MinValueValidator(1), MaxValueValidator(5)),
-#     )
-#     description_assessment = models.CharField('Описание оценки', max_length=10)
-#     meet = models.BooleanField('Соответствие', default=False)
-
-#     def __str__(self) -> str:
-#         return f'{self.assessment}-{self.description_assessment}'
-
-
-# class CompetencyAssessmentUser(models.Model):
-#     '''Оценка компетенций сотрудника.'''
-#     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Сотрудник')
-#     competency_assessment = models.ForeignKey(CompetencyAssessment, on_delete=models.CASCADE, verbose_name='Оценка компетенции')
-
-#     def __str__(self) -> str:
-#         return f'Оценка {self.user}'
+    class Meta:
+        verbose_name = 'План развития'
+        verbose_name_plural = 'Планы развития'

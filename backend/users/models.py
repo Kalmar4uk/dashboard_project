@@ -24,7 +24,13 @@ class User(AbstractUser):
 class Team(models.Model):
     '''Модель команды.'''
     name = models.CharField('Название команды', max_length=50)
-    create_date = models.DateTimeField('Дата создания команды', auto_now_add=True)
+    create_date = models.DateTimeField(
+        'Дата создания команды', auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = 'Команда'
+        verbose_name_plural = 'Команды'
 
     def __str__(self) -> str:
         return self.name

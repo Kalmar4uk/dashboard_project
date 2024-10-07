@@ -22,7 +22,9 @@ class CustomUserAdmin(UserAdmin):
         )}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
         ('Работа', {'fields': ('grade', 'job_title', 'date_accession')}),
-        (_('Permissions'), {'fields': ('is_active', 'is_superuser', 'is_staff')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_superuser', 'is_staff')
+            }),
     )
     add_fieldsets = (
         (
@@ -35,6 +37,7 @@ class CustomUserAdmin(UserAdmin):
                     'first_name',
                     'last_name',
                     'job_title',
+                    'grade',
                     'is_superuser',
                     'is_staff',
                     'is_active'
@@ -46,8 +49,6 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email',)
     ordering = ('date_accession',)
 
-
-admin.site.register(Employee)
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -61,8 +62,5 @@ class TeamAdmin(admin.ModelAdmin):
         )}),)
     readonly_fields = ('create_date',)
 
-# @admin.register(LevelSpeciality)
-# class LevelSpecialityAdmin(admin.ModelAdmin):
-#     list_display = ('user', 'name', 'order_level')
-#     search_fields = ('name',)
-#     list_filter = ('order_level', 'name')
+
+admin.site.register(Employee)
