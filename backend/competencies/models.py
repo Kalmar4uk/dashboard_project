@@ -11,10 +11,9 @@ User = get_user_model()
 class Skills(models.Model):
     '''Модель навыка.'''
     name = models.CharField('Название навыка', max_length=100)
-    domen = models.CharField('Тип навыка', max_length=15, choices=SKILLS)
-    # указал дефолтное значение для оценки
+    domen = models.CharField('Тип навыка', max_length=15)
     skill_score = models.FloatField('Минимальная оценка навыка', default=1)
-    # тут минимальная оценка должна тем числом, которое можно минимально указать в модели EmployeeSkills в Уровне навыка
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Навык'
@@ -33,6 +32,7 @@ class EmployeeSkills(models.Model):
         Skills, on_delete=models.CASCADE, verbose_name='Навык'
     )
     competence_score = models.FloatField('Уровень навыка')
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Навык сотрудника'
@@ -61,13 +61,14 @@ class Evaluation(models.Model):
         related_name='appreciated'
     )
     date_evaluation = models.DateField('Дата оценки', auto_now_add=True)
-    # type_evaluation Тип оценки? Какой тип поля и зачем оно?
+    type_evaluation = models.CharField('Тип оценки', max_length=30)
     value_evaluation = models.PositiveSmallIntegerField(
         'Значение оценки',
         validators=(MinValueValidator(1), MaxValueValidator(5)),
     )
-    comment = models.TextField('Комментарий оценки',)
-    accordance = models.BooleanField('Соответствие', default=False)
+    comment = models.TextField('Комментарий оценки', null=True, blank=True)
+    accordance = models.BooleanField('Соответствие', null=True)
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Оценка'
@@ -86,6 +87,7 @@ class IndividualDevelopmentPlan(models.Model):
     start_date = models.DateField('Дата начала', auto_now_add=True)
     end_date = models.DateField('Дата окончания',)
     status = models.CharField('Статус', max_length=15)
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'План развития'

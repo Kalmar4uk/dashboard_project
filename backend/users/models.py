@@ -11,6 +11,7 @@ class User(AbstractUser):
     job_title = models.CharField('Должность', max_length=50)
     grade = models.CharField('Грейд', max_length=6)
     date_accession = models.DateField('Дата устройства', auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -27,6 +28,7 @@ class Team(models.Model):
     create_date = models.DateTimeField(
         'Дата создания команды', auto_now_add=True
     )
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Команда'
