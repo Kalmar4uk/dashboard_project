@@ -1,4 +1,4 @@
 SKILLS = (
-        ('Hard skills', 'Soft skills'),
-        ('Soft skilss', 'Hard skills')
+        ('Hard skills', 'Hard skills'),
+        ('Soft skilss', 'Soft skills')
 )
