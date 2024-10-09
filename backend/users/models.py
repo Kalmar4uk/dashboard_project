@@ -6,6 +6,7 @@ from .manager import CustomUserManager
 
 
 class User(AbstractUser):
+    '''Модель пользователя'''
     username = None
     email = models.EmailField(_('email address'), unique=True)
     job_title = models.CharField('Должность', max_length=50)
@@ -38,10 +39,14 @@ class Team(models.Model):
         return self.name
 
 
-# по поводу этой модельки стоит еще подумать, наверное, завтра удалю её
 class Employee(models.Model):
+    '''Модель сотрудника.'''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, related_name='employees', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
 
     def __str__(self):
         return f'{self.user} - {self.team}'
