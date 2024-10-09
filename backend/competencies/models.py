@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from .constants import SKILLS
 # import uuid
 # from users.models import Team, Employee
 
