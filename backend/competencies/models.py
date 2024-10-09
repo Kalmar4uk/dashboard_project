@@ -50,9 +50,6 @@ class Evaluation(models.Model):
         verbose_name='Сотрудник',
         related_name='user'
     )
-    # Вопрос с Оценившим, кажется, что если оценивший сотрудник
-    # уйдет из компании его оценка все равно должна остаться
-    # поставил Set_null, можно подумать как прикрутить Set_default
     appreciated = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -61,7 +58,7 @@ class Evaluation(models.Model):
         related_name='appreciated'
     )
     date_evaluation = models.DateField('Дата оценки', auto_now_add=True)
-    # type_evaluation Тип оценки? Какой тип поля и зачем оно?
+    type_evaluation = models.CharField('Тип оценки', max_length=30)
     value_evaluation = models.PositiveSmallIntegerField(
         'Значение оценки',
         validators=(MinValueValidator(1), MaxValueValidator(5)),
@@ -75,7 +72,7 @@ class Evaluation(models.Model):
         verbose_name_plural = 'Оценки'
 
     def __str__(self) -> str:
-        return f'{self.comment} - {self.value_evaluation}'
+        return f'Оценка сотрудника {self.employee}'
 
 
 class IndividualDevelopmentPlan(models.Model):

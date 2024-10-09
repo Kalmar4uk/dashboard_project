@@ -3,7 +3,7 @@ import csv
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from users.models import Team, User
+from users.models import Team, User, Employee
 from competencies.models import Skills, EmployeeSkills, Evaluation
 
 PATH_TO_FILE = f'{settings.BASE_DIR}/data/'
@@ -13,7 +13,8 @@ MODELS = {
     'User': User,
     'Skills': Skills,
     'Employeeskills': EmployeeSkills,
-    'Evaluation': Evaluation
+    'Evaluation': Evaluation,
+    'Employee': Employee
 }
 
 

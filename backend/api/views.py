@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model 
+from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404

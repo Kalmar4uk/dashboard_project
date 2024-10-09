@@ -41,8 +41,8 @@ class Team(models.Model):
 
 class Employee(models.Model):
     '''Модель сотрудника.'''
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    team = models.ForeignKey(Team, related_name='employees', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Сотрудник')
+    team = models.ForeignKey(Team, related_name='employees', on_delete=models.CASCADE, verbose_name='Команда')
 
     class Meta:
         verbose_name = 'Сотрудник'
