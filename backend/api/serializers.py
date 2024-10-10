@@ -3,7 +3,7 @@ from rest_framework import serializers
 import random
 
 from competencies.models import User, Skills, Evaluation, IndividualDevelopmentPlan
-from users.models import Team, Employee
+from users.models import Team
 
 
 class TokenSerializer(serializers.Serializer):
@@ -34,39 +34,38 @@ class TokenSerializer(serializers.Serializer):
         return data
 
 
-class UserSerializer(serializers.ModelSerializer):
-    '''Сериализатор для пользователей.'''
+class UserAndEmployeeSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    is_deleted = serializers.BooleanField()
+
     class Meta:
         fields = (
             'id',
             'first_name',
             'last_name',
             'email',
-            'password',
             'job_title',
             'grade',
             'date_accession',
+            'is_deleted'
         )
+
+
+class UserSerializer(UserAndEmployeeSerializer):
+    '''Сериализатор для пользователей.'''
+
+    class Meta(UserAndEmployeeSerializer.Meta):
         model = User
 
 
-class EmployeeSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(UserAndEmployeeSerializer):
     '''Сериализатор для пользователей.'''
-    team_id = serializers.IntegerField(source='employees.id', read_only=True)
+    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
 
     class Meta:
-        fields = (
-            'id',
-            'first_name',
-            'last_name',
-            'email',
-            'job_title',
-            'grade',
-            'date_accession',
-            'team_id',
-            # 'is_deleted',
-        )
-        model = Employee
+        fields = UserAndEmployeeSerializer.Meta.fields + ('team',)
+        model = User
 
 
 class TeamSerializer(serializers.ModelSerializer):
@@ -90,12 +89,16 @@ class TeamSerializer(serializers.ModelSerializer):
 
 class SkillSerializer(serializers.ModelSerializer):
     '''Сериализатор для навыков.'''
+    skill_score = serializers.IntegerField()
+    is_deleted = serializers.BooleanField()
+
     class Meta:
         fields = (
             'id',
             'name',
             'domen',
             'skill_score',
+            'is_deleted'
         )
         model = Skills
 
@@ -103,7 +106,7 @@ class SkillSerializer(serializers.ModelSerializer):
 class EvaluationSerializer(serializers.ModelSerializer):
     '''Сериализатор для оценки.'''
     evaluator_id = serializers.IntegerField(source='appreciated.id', read_only=True)
-    evaluated_id = serializers.IntegerField(source='user.id', read_only=True)
+    evaluated_id = serializers.IntegerField(source='employee.id', read_only=True)
 
     class Meta:
         fields = (

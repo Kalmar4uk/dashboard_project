@@ -2,16 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User, Team, Employee
-
-
-class UserInline(admin.TabularInline):
-    model = Employee
+from .models import User, Team
 
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
-    inlines = [UserInline]
     model = User
     list_display = (
         'email',
@@ -21,15 +16,15 @@ class UserAdmin(UserAdmin):
         'date_accession',
         'is_deleted'
     )
-    list_filter = ('is_deleted', 'job_title')
+    list_filter = ('is_deleted', 'job_title', 'team')
     fieldsets = (
         (None, {'fields': (
             'email', 'password',
         )}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
-        ('Работа', {'fields': ('grade', 'job_title', 'date_accession')}),
+        ('Работа', {'fields': ('grade', 'job_title', 'team', 'date_accession')}),
         (_('Permissions'), {
-            'fields': ('is_active', 'is_superuser', 'is_staff')
+            'fields': ('is_active', 'is_superuser', 'is_staff', 'is_deleted')
             }),
     )
     add_fieldsets = (
@@ -60,19 +55,18 @@ class UserAdmin(UserAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = (
         'name',
-        'count_user',
         'create_date'
     )
     fieldsets = (
         (None, {'fields': (
-            'name', 'count_user', 'create_date'
+            'name', 'create_date'
         )}),)
-    readonly_fields = ('create_date', 'count_user')
+    readonly_fields = ('create_date',)
 
 
-@admin.register(Employee)
-class EmployeeAdmin(admin.ModelAdmin):
-    list_display = (
-        'user',
-        'team'
-    )
+# @admin.register(Employee)
+# class EmployeeAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'user',
+#         'team'
+#     )

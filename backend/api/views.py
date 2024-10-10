@@ -9,9 +9,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
-from .serializers import TokenSerializer, UserSerializer, SkillSerializer, TeamSerializer, EvaluationSerializer, DevelopmentSerializer
+from .serializers import TokenSerializer, UserSerializer, SkillSerializer, TeamSerializer, EvaluationSerializer, DevelopmentSerializer, EmployeeSerializer
 from competencies.models import User, Skills, Evaluation, IndividualDevelopmentPlan
-from users.models import Team, Employee
+from users.models import Team
 
 
 class APIToken(APIView):
@@ -60,9 +60,19 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class EmployViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
-    serializer_class = UserSerializer
-    http_method_names = ('get', 'post', 'put', 'delete')
+    queryset = User.objects.all()
+    serializer_class = EmployeeSerializer
+    http_method_names = ('get', 'put', 'delete')
+
+    def destroy(self, request, *args, **kwargs):
+        user = User.objects.filter(
+            id=self.kwargs.get('pk')
+            ).update(is_deleted=True)
+        if user:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'error': 'Пользователя с таким id нет'},
+            status=status.HTTP_404_NOT_FOUND)
 
 
 class SkillViewSet(viewsets.ModelViewSet):
