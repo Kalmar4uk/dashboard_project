@@ -16,7 +16,7 @@ class UserAdmin(UserAdmin):
         'date_accession',
         'is_deleted'
     )
-    list_filter = ('is_deleted', 'job_title', 'team')
+    list_filter = ('is_deleted', 'job_title', 'grade', 'team')
     fieldsets = (
         (None, {'fields': (
             'email', 'password',
@@ -62,11 +62,3 @@ class TeamAdmin(admin.ModelAdmin):
             'name', 'create_date'
         )}),)
     readonly_fields = ('create_date',)
-
-
-# @admin.register(Employee)
-# class EmployeeAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'user',
-#         'team'
-#     )

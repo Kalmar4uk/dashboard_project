@@ -1,9 +1,13 @@
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 import random
 
 from competencies.models import User, Skills, Evaluation, IndividualDevelopmentPlan
 from users.models import Team
+
+from .constants import GRADE, JOB_TITLE
+from .validators import validate_first_and_last_name
 
 
 class TokenSerializer(serializers.Serializer):
@@ -35,8 +39,12 @@ class TokenSerializer(serializers.Serializer):
 
 
 class UserAndEmployeeSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(max_length=150)
-    last_name = serializers.CharField(max_length=150)
+    first_name = serializers.CharField(
+        max_length=150, validators=[validate_first_and_last_name]
+    )
+    last_name = serializers.CharField(
+        max_length=150, validators=[validate_first_and_last_name]
+    )
     is_deleted = serializers.BooleanField()
 
     class Meta:
@@ -51,6 +59,22 @@ class UserAndEmployeeSerializer(serializers.ModelSerializer):
             'is_deleted'
         )
 
+    def validate_grade(self, obj):
+        obj = obj.title()
+        if obj not in GRADE:
+            raise serializers.ValidationError(
+                'Нет такого грейда в базе'
+            )
+        return obj
+
+    def validate_job_title(self, obj):
+        obj = obj.title()
+        if obj not in JOB_TITLE:
+            raise serializers.ValidationError(
+                'Нет такой должности в базе'
+            )
+        return obj
+
 
 class UserSerializer(UserAndEmployeeSerializer):
     '''Сериализатор для пользователей.'''
@@ -61,22 +85,34 @@ class UserSerializer(UserAndEmployeeSerializer):
 
 class EmployeeSerializer(UserAndEmployeeSerializer):
     '''Сериализатор для пользователей.'''
+    password = serializers.CharField(max_length=128, write_only=True)
     team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
 
     class Meta:
-        fields = UserAndEmployeeSerializer.Meta.fields + ('team',)
+        fields = UserAndEmployeeSerializer.Meta.fields + ('password', 'team')
         model = User
+
+    def validate_password(self, data):
+        validate_password(data)
+        return data
 
 
 class TeamSerializer(serializers.ModelSerializer):
     '''Сериализатор для команд.'''
     stress_level = serializers.SerializerMethodField()
-    employee_count = serializers.IntegerField(source='employees.count', read_only=True)
+    employee_count = serializers.IntegerField(
+        source='users.count',
+        read_only=True
+    )
+    users = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True
+    )
 
     class Meta:
         fields = (
             'id',
             'name',
+            'users',
             'create_date',
             'stress_level',
             'employee_count',
@@ -105,8 +141,12 @@ class SkillSerializer(serializers.ModelSerializer):
 
 class EvaluationSerializer(serializers.ModelSerializer):
     '''Сериализатор для оценки.'''
-    evaluator_id = serializers.IntegerField(source='appreciated.id', read_only=True)
-    evaluated_id = serializers.IntegerField(source='employee.id', read_only=True)
+    evaluator_id = serializers.IntegerField(
+        source='appreciated.id', read_only=True
+    )
+    evaluated_id = serializers.IntegerField(
+        source='employee.id', read_only=True
+    )
 
     class Meta:
         fields = (

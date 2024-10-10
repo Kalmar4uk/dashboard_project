@@ -53,16 +53,7 @@ class DeleteAPIToken(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    http_method_names = ('get', 'put', 'delete')
-
-
-class EmployViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = EmployeeSerializer
-    http_method_names = ('get', 'put', 'delete')
+class UserAndEmployViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         user = User.objects.filter(
@@ -75,12 +66,25 @@ class EmployViewSet(viewsets.ModelViewSet):
             status=status.HTTP_404_NOT_FOUND)
 
 
+class UserViewSet(UserAndEmployViewSet):
+    queryset = User.objects.filter(team=None)
+    serializer_class = UserSerializer
+    http_method_names = ('get', 'put', 'delete')
+
+
+class EmployViewSet(UserAndEmployViewSet):
+    queryset = User.objects.exclude(team=None)
+    serializer_class = EmployeeSerializer
+    http_method_names = ('get', 'put', 'delete')
+
+
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skills.objects.all()
     serializer_class = SkillSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
 
-
+# @action(url_path='drop_user')
+# @action(url_path='update_user')
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer

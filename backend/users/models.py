@@ -12,6 +12,7 @@ class Team(models.Model):
         'Дата создания команды', auto_now_add=True
     )
     is_deleted = models.BooleanField(default=False)
+    # Добавить тимлида
 
     class Meta:
         verbose_name = 'Команда'
@@ -45,14 +46,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
-
-# class Employee(User):
-#     '''Модель сотрудника.'''
-#     team = models.ForeignKey(Team, related_name='employees', on_delete=models.CASCADE, verbose_name='Команда')
-
-#     class Meta:
-#         verbose_name = 'Сотрудник'
-#         verbose_name_plural = 'Сотрудники'
-
-#     def __str__(self):
-#         return f'{self.user} - {self.team}'
