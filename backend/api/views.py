@@ -8,9 +8,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .serializers import TokenSerializer, UserSerializer, SkillSerializer, TeamSerializer, DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer, UpdateUserPasswordSerializer
+from .serializers import TokenSerializer, SkillSerializer, TeamSerializer, DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer, UpdateUserPasswordSerializer, TeamWriteSerializer, UpdateAndCreateUserTeamSerializer
 from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
+from .filters import UserInTeamFilter
 from users.models import Team
 
 
@@ -66,16 +68,12 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
             status=status.HTTP_404_NOT_FOUND)
 
 
-class UserViewSet(UserAndEmployViewSet):
-    queryset = User.objects.filter(team=None)
-    serializer_class = UserSerializer
-    http_method_names = ('get', 'put', 'delete')
-
-
 class EmployViewSet(UserAndEmployViewSet):
-    queryset = User.objects.exclude(team=None)
+    queryset = User.objects.all()
     serializer_class = EmployeeSerializer
     http_method_names = ('get', 'put', 'delete')
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = UserInTeamFilter
 
 
 class UpdateUserPassword(APIView):
@@ -98,20 +96,25 @@ class SkillViewSet(viewsets.ModelViewSet):
     serializer_class = SkillSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
 
-# @action(url_path='drop_user')
-# @action(url_path='update_user')
+
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
 
-    # def get_serializer_class(self):
-    #     kwargs = self.context.get(
-    #         'request'
-    #     ).parser_context.get('kwargs')
-    #     if kwargs:
-    #         return ...
-    #     return super().get_serializer_class()
+    def get_serializer_class(self):
+        if self.request.method == 'get':
+            return TeamSerializer
+        return TeamWriteSerializer
+
+    @action(url_path='update_user', methods=['post', 'put'], detail=True)
+    def update_user(self, request, pk):
+        team = Team.objects.get(id=pk)
+        serializer = UpdateAndCreateUserTeamSerializer(team, context={'request': request}, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if request.method == 'POST':
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DevelopmentViewSet(viewsets.ModelViewSet):

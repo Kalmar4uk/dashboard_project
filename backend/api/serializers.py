@@ -39,72 +39,6 @@ class TokenSerializer(serializers.Serializer):
         return data
 
 
-class UserAndEmployeeSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(
-        max_length=150, validators=[validate_first_and_last_name]
-    )
-    last_name = serializers.CharField(
-        max_length=150, validators=[validate_first_and_last_name]
-    )
-    competence = serializers.SerializerMethodField(read_only=True)
-    is_deleted = serializers.BooleanField()
-
-    class Meta:
-        fields = (
-            'id',
-            'first_name',
-            'last_name',
-            'email',
-            'job_title',
-            'grade',
-            'competence',
-            'date_accession',
-            'is_deleted'
-        )
-
-    def validate_grade(self, obj):
-        obj = obj.title()
-        if obj not in GRADE:
-            raise serializers.ValidationError(
-                'Нет такого грейда в базе'
-            )
-        return obj
-
-    def validate_job_title(self, obj):
-        obj = obj.title()
-        if obj not in JOB_TITLE:
-            raise serializers.ValidationError(
-                'Нет такой должности в базе'
-            )
-        return obj
-
-    def get_competence(self, obj):
-        competence = obj.user_employeeskills.all()
-        serializer = EmployyeSkillsForUserSerializer(competence, many=True)
-        return serializer.data
-
-
-class UserSerializer(UserAndEmployeeSerializer):
-    '''Сериализатор для пользователей.'''
-
-    class Meta(UserAndEmployeeSerializer.Meta):
-        model = User
-
-
-class EmployeeSerializer(UserAndEmployeeSerializer):
-    '''Сериализатор для пользователей.'''
-    password = serializers.CharField(max_length=128, write_only=True)
-    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
-
-    class Meta:
-        fields = UserAndEmployeeSerializer.Meta.fields + ('password', 'team')
-        model = User
-
-    def validate_password(self, data):
-        validate_password(data)
-        return data
-
-
 class UpdateUserPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)
     current_password = serializers.CharField(required=True)
@@ -126,6 +60,81 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
         return data
 
 
+class EmployeeSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(
+        max_length=150, validators=[validate_first_and_last_name]
+    )
+    last_name = serializers.CharField(
+        max_length=150, validators=[validate_first_and_last_name]
+    )
+    team = serializers.StringRelatedField(read_only=True)
+    competence = serializers.SerializerMethodField(read_only=True)
+    is_deleted = serializers.BooleanField()
+
+    class Meta:
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'job_title',
+            'grade',
+            'competence',
+            'team',
+            'date_accession',
+            'is_deleted'
+        )
+        model = User
+
+    def validate_grade(self, obj):
+        obj = obj.title()
+        if obj not in GRADE:
+            raise serializers.ValidationError(
+                'Нет такого грейда в базе'
+            )
+        return obj
+
+    def validate_job_title(self, obj):
+        obj = obj.title()
+        if obj not in JOB_TITLE:
+            raise serializers.ValidationError(
+                'Нет такой должности в базе'
+            )
+        return obj
+
+    def get_competence(self, obj):
+        competence = obj.user_employeeskills.all()
+        hard_skill = competence.filter(
+            competence__domen='Hard skills'
+            ).aggregate(
+                Avg('value_evaluation')
+                )['value_evaluation__avg']
+        soft_skill = competence.filter(
+            competence__domen='Soft skills'
+            ).aggregate(
+                Avg('value_evaluation')
+                )['value_evaluation__avg']
+        return {
+            'hard_skills': round(hard_skill, 2),
+            'soft_skills': round(soft_skill, 2)
+        }
+
+
+class UserSerializerForTeam(EmployeeSerializer):
+    competence = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'job_title',
+            'grade',
+            'competence'
+        )
+        model = User
+
+
 class TeamSerializer(serializers.ModelSerializer):
     '''Сериализатор для команд.'''
     stress_level = serializers.SerializerMethodField()
@@ -133,9 +142,7 @@ class TeamSerializer(serializers.ModelSerializer):
         source='users.count',
         read_only=True
     )
-    users = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True
-    )
+    users = UserSerializerForTeam(many=True)
     average_hard_skills = serializers.SerializerMethodField(read_only=True)
     average_soft_skills = serializers.SerializerMethodField(read_only=True)
     bus_factor = serializers.SerializerMethodField(read_only=True)
@@ -144,12 +151,12 @@ class TeamSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'users',
             'create_date',
             'stress_level',
             'employee_count',
             'average_hard_skills',
             'average_soft_skills',
+            'users',
             'bus_factor'
         )
         model = Team
@@ -200,6 +207,48 @@ class TeamSerializer(serializers.ModelSerializer):
         #         if skill_user:
         #             find_skills.append(skill_user)
         return obj.id
+
+
+class TeamWriteSerializer(serializers.ModelSerializer):
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+
+    class Meta:
+        fields = (
+            "name",
+            "users"
+        )
+        model = Team
+
+    def create(self, validated_data):
+        users = validated_data.pop('users')
+        team = Team.objects.create(**validated_data)
+        for user in users:
+            User.objects.filter(id=user.id).update(team=team)
+        return team
+
+    def to_representation(self, instance):
+        return TeamSerializer(instance, context={
+            'request': self.context.get('request')
+        }).data
+
+
+class UpdateAndCreateUserTeamSerializer(serializers.Serializer):
+    user_in_team = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='users.id')
+    new_user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='users.id')
+
+    class Meta:
+        fields = (
+            'user_in_team',
+            'new_user'
+        )
+
+    def create(self, validated_data):
+        print(validated_data)
+
+    def to_representation(self, instance):
+        return TeamSerializer(instance, context={
+            'request': self.context.get('request')
+        }).data
 
 
 class DevelopmentSerializer(serializers.ModelSerializer):
