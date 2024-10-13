@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from users.models import Team, User
-from competencies.models import Skills, EmployeeSkills, Evaluation
+from competencies.models import Skills, EmployeeSkills
 
 PATH_TO_FILE = f'{settings.BASE_DIR}/data/'
 
@@ -13,7 +13,6 @@ MODELS = {
     'User': User,
     'Skills': Skills,
     'Employeeskills': EmployeeSkills,
-    'Evaluation': Evaluation,
 }
 
 

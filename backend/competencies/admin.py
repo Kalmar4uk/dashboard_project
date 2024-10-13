@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (
-    Skills, EmployeeSkills, Evaluation, IndividualDevelopmentPlan
+    Skills, EmployeeSkills, IndividualDevelopmentPlan
 )
 
 
@@ -33,20 +33,5 @@ class SkillsAdmin(admin.ModelAdmin):
         'name',
     )
 
-@admin.register(Evaluation)
-class EvaluationAdmin(admin.ModelAdmin):
-    list_display = (
-        'employee',
-        'value_evaluation',
-        'type_evaluation',
-        'accordance',
-        'appreciated',
-        'date_evaluation',
-        'is_deleted',
-    )
-    list_filter = (
-        'is_deleted',
-        'employee',
-    )
 
 admin.site.register(IndividualDevelopmentPlan)

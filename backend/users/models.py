@@ -12,7 +12,6 @@ class Team(models.Model):
         'Дата создания команды', auto_now_add=True
     )
     is_deleted = models.BooleanField(default=False)
-    # Добавить тимлида
 
     class Meta:
         verbose_name = 'Команда'

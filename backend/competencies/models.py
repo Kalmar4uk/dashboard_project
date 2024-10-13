@@ -1,10 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from .constants import SKILLS
 from django.utils import timezone
-# import uuid
-# from users.models import Team, Employee
 
 User = get_user_model()
 
@@ -27,35 +24,23 @@ class Skills(models.Model):
 class EmployeeSkills(models.Model):
     '''Модель навыков сотрудника.'''
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name='Сотрудник'
-    )
-    competence = models.ForeignKey(
-        Skills, on_delete=models.CASCADE, verbose_name='Навык'
-    )
-    competence_score = models.FloatField('Уровень навыка')
-    is_deleted = models.BooleanField(default=False)
-
-    class Meta:
-        verbose_name = 'Навык сотрудника'
-        verbose_name_plural = 'Навыки сотрудников'
-
-    def __str__(self) -> str:
-        return f'{self.user} оценен по навыку {self.competence}'
-
-
-class Evaluation(models.Model):
-    '''Модель оценки.'''
-    employee = models.ForeignKey(
-        User, on_delete=models.CASCADE,
+        User,
+        on_delete=models.CASCADE,
         verbose_name='Сотрудник',
-        related_name='user'
+        related_name='user_employeeskills'
     )
     appreciated = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Оценивший',
-        related_name='appreciated'
+        related_name='appreciateds'
+    )
+    competence = models.ForeignKey(
+        Skills,
+        on_delete=models.CASCADE,
+        verbose_name='Навык',
+        related_name='competence'
     )
     date_evaluation = models.DateField('Дата оценки', auto_now_add=True)
     type_evaluation = models.CharField('Тип оценки', max_length=30)
@@ -68,11 +53,11 @@ class Evaluation(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = 'Оценка'
-        verbose_name_plural = 'Оценки'
+        verbose_name = 'Навык сотрудника'
+        verbose_name_plural = 'Навыки сотрудников'
 
     def __str__(self) -> str:
-        return f'Оценка сотрудника {self.employee}'
+        return f'{self.user} оценен по навыку {self.competence}'
 
 
 class IndividualDevelopmentPlan(models.Model):

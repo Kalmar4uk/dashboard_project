@@ -9,8 +9,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
-from .serializers import TokenSerializer, UserSerializer, SkillSerializer, TeamSerializer, EvaluationSerializer, DevelopmentSerializer, EmployeeSerializer
-from competencies.models import User, Skills, Evaluation, IndividualDevelopmentPlan
+from .serializers import TokenSerializer, UserSerializer, SkillSerializer, TeamSerializer, DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer, UpdateUserPasswordSerializer
+from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
 from users.models import Team
 
 
@@ -62,7 +62,7 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
         if user:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {'error': 'Пользователя с таким id нет'},
+            {'errors': 'Пользователя с таким id нет'},
             status=status.HTTP_404_NOT_FOUND)
 
 
@@ -78,6 +78,21 @@ class EmployViewSet(UserAndEmployViewSet):
     http_method_names = ('get', 'put', 'delete')
 
 
+class UpdateUserPassword(APIView):
+
+    def post(self, request):
+        serializer = UpdateUserPasswordSerializer(
+            context={'request': request}, data=request.data
+        )
+        self.user = request.user
+
+        if serializer.is_valid():
+            self.user.set_password(serializer.data.get('new_password'))
+            self.user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skills.objects.all()
     serializer_class = SkillSerializer
@@ -90,14 +105,21 @@ class TeamViewSet(viewsets.ModelViewSet):
     serializer_class = TeamSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
 
-
-class EvaluationViewSet(viewsets.ModelViewSet):
-    queryset = Evaluation.objects.all()
-    serializer_class = EvaluationSerializer
-    http_method_names = ('get', 'post', 'put', 'delete')
+    # def get_serializer_class(self):
+    #     kwargs = self.context.get(
+    #         'request'
+    #     ).parser_context.get('kwargs')
+    #     if kwargs:
+    #         return ...
+    #     return super().get_serializer_class()
 
 
 class DevelopmentViewSet(viewsets.ModelViewSet):
     queryset = IndividualDevelopmentPlan.objects.all()
     serializer_class = DevelopmentSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
+
+
+class EmployeeSkillsViewSet(viewsets.ModelViewSet):
+    queryset = EmployeeSkills.objects.all()
+    serializer_class = EmployeeSkillsSerializer
