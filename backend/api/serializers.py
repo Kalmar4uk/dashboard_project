@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.password_validation import validate_password
-from django.db.models import Avg, Sum
+from django.db.models import Avg
 from rest_framework import serializers
 import random
 
@@ -67,7 +67,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(
         max_length=150, validators=[validate_first_and_last_name]
     )
-    team = serializers.StringRelatedField(read_only=True)
+    teams = serializers.StringRelatedField(read_only=True, many=True)
     competence = serializers.SerializerMethodField(read_only=True)
     is_deleted = serializers.BooleanField()
 
@@ -80,7 +80,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'job_title',
             'grade',
             'competence',
-            'team',
+            'teams',
             'date_accession',
             'is_deleted'
         )
@@ -114,6 +114,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
             ).aggregate(
                 Avg('value_evaluation')
                 )['value_evaluation__avg']
+        if hard_skill is None:
+            hard_skill = 0
+        if soft_skill is None:
+            soft_skill = 0
         return {
             'hard_skills': round(hard_skill, 2),
             'soft_skills': round(soft_skill, 2)
@@ -121,7 +125,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializerForTeam(EmployeeSerializer):
-    competence = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         fields = (
@@ -142,7 +145,7 @@ class TeamSerializer(serializers.ModelSerializer):
         source='users.count',
         read_only=True
     )
-    users = UserSerializerForTeam(many=True)
+    employees = UserSerializerForTeam(many=True)
     average_hard_skills = serializers.SerializerMethodField(read_only=True)
     average_soft_skills = serializers.SerializerMethodField(read_only=True)
     bus_factor = serializers.SerializerMethodField(read_only=True)
@@ -156,26 +159,27 @@ class TeamSerializer(serializers.ModelSerializer):
             'employee_count',
             'average_hard_skills',
             'average_soft_skills',
-            'users',
+            'employees',
             'bus_factor'
         )
         model = Team
 
     def find_users_or_skills_avg(self, obj, competence=None):
-        users = obj.users.all()
+        users = obj.employees.all()
         if competence is None:
             return users
         average = []
         for user in users:
-            average.append(
-                user.user_employeeskills.filter(
-                    competence__domen=competence
+            skills = user.user_employeeskills.filter(
+                competence__domen=competence
                 ).aggregate(
                     Avg(
                         'value_evaluation'
                         )
                     )['value_evaluation__avg']
-            )
+            if skills is None:
+                skills = 0
+            average.append(skills)
         result = round(sum(average)/len(average), 2)
         return result
 
@@ -210,7 +214,9 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class TeamWriteSerializer(serializers.ModelSerializer):
-    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    users = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True
+    )
 
     class Meta:
         fields = (
@@ -232,9 +238,13 @@ class TeamWriteSerializer(serializers.ModelSerializer):
         }).data
 
 
-class UpdateAndCreateUserTeamSerializer(serializers.Serializer):
-    user_in_team = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='users.id')
-    new_user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='users.id')
+class UpdateUserTeamSerializer(serializers.Serializer):
+    user_in_team = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
+    new_user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
 
     class Meta:
         fields = (
@@ -242,8 +252,76 @@ class UpdateAndCreateUserTeamSerializer(serializers.Serializer):
             'new_user'
         )
 
-    def create(self, validated_data):
-        print(validated_data)
+    def validate_user_in_team(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Необходимо добавить сотрудника на изменение!'
+            )
+        user = User.objects.get(id=value.id)
+        team_id = self.context.get(
+            'request'
+        ).parser_context.get('kwargs').get('pk')
+        team = Team.objects.filter(id=team_id, employees=user)
+        if not team:
+            raise serializers.ValidationError(
+                'Сотрудника нет в команде!'
+            )
+        return value
+
+    def validate_new_user(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Необходимо добавить сотрудника для изменения'
+            )
+        user = User.objects.get(id=value.id)
+        team_id = self.context.get(
+            'request'
+        ).parser_context.get('kwargs').get('pk')
+        team = Team.objects.filter(id=team_id, employees=user)
+        if team:
+            raise serializers.ValidationError(
+                'Сотрудник уже находится в команде!'
+            )
+        return value
+
+    def to_representation(self, instance):
+        return TeamSerializer(instance, context={
+            'request': self.context.get('request')
+        }).data
+
+
+class CreateDeleteUserTeamSerilalizer(serializers.Serializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
+
+    class Meta:
+        fields = (
+            'user',
+        )
+        model = Team
+
+    def validate_user(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Не передан сотрудник!'
+            )
+        user = User.objects.get(id=value.id)
+        team_id = self.context.get(
+            'request'
+        ).parser_context.get('kwargs').get('pk')
+        team = Team.objects.filter(id=team_id, employees=user)
+        if self.context.get('request').method == 'DELETE':
+            if not team:
+                raise serializers.ValidationError(
+                    'Сотрудника нет в команде!'
+                )
+        if self.context.get('request').method == 'POST':
+            if team:
+                raise serializers.ValidationError(
+                    'Сотрудник уже находится в команде!'
+                )
+        return value
 
     def to_representation(self, instance):
         return TeamSerializer(instance, context={

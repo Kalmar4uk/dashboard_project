@@ -10,7 +10,11 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .serializers import TokenSerializer, SkillSerializer, TeamSerializer, DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer, UpdateUserPasswordSerializer, TeamWriteSerializer, UpdateAndCreateUserTeamSerializer
+from .serializers import (
+    TokenSerializer, SkillSerializer, TeamSerializer,
+    DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer,
+    UpdateUserPasswordSerializer, TeamWriteSerializer, UpdateUserTeamSerializer, CreateDeleteUserTeamSerilalizer
+)
 from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
 from .filters import UserInTeamFilter
 from users.models import Team
@@ -75,6 +79,12 @@ class EmployViewSet(UserAndEmployViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = UserInTeamFilter
 
+    @action(url_path='me', detail=False)
+    def get_users_info(self, request):
+        user = User.objects.get(id=request.user.id)
+        serializer = EmployeeSerializer(user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UpdateUserPassword(APIView):
 
@@ -101,20 +111,48 @@ class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('name',)
 
     def get_serializer_class(self):
         if self.request.method == 'get':
             return TeamSerializer
         return TeamWriteSerializer
 
-    @action(url_path='update_user', methods=['post', 'put'], detail=True)
+    @action(url_path='update_user', methods=['put'], detail=True)
     def update_user(self, request, pk):
         team = Team.objects.get(id=pk)
-        serializer = UpdateAndCreateUserTeamSerializer(team, context={'request': request}, data=request.data)
+        serializer = UpdateUserTeamSerializer(
+            team, context={'request': request}, data=request.data
+        )
         serializer.is_valid(raise_exception=True)
-        if request.method == 'POST':
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        user_in_team = serializer.validated_data.get('user_in_team')
+        new_user = serializer.validated_data.get('new_user')
+        team.employees.remove(user_in_team)
+        team.employees.add(new_user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(url_path='create_user', methods=['post'], detail=True)
+    def create_user(self, request, pk):
+        team = Team.objects.get(id=pk)
+        serializer = CreateDeleteUserTeamSerilalizer(
+            team, context={'request': request}, data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        new_user = serializer.validated_data.get('user')
+        team.employees.add(new_user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(url_path='delete_user', methods=['delete'], detail=True)
+    def delete_user(self, request, pk):
+        team = Team.objects.get(id=pk)
+        serializer = CreateDeleteUserTeamSerilalizer(
+            team, context={'request': request}, data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user')
+        team.employees.remove(user)
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
 class DevelopmentViewSet(viewsets.ModelViewSet):

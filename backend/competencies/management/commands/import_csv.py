@@ -32,15 +32,28 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         name_file = kwargs['name_file']
         name_model = kwargs['name_model']
-        name_model = name_model.title()
-        model = MODELS[name_model]
-        with open(
-            f'{PATH_TO_FILE}{name_file}', 'r', encoding='utf-8'
-        ) as csvfile:
-            reader = csv.DictReader(csvfile)
-            model.objects.bulk_create(
-                model(**data) for data in reader
-            )
-            self.stdout.write(
-                self.style.SUCCESS('Данные из файла загружены')
-            )
+        if name_model:
+            name_model = name_model.title()
+            model = MODELS[name_model]
+            with open(
+                f'{PATH_TO_FILE}{name_file}', 'r', encoding='utf-8'
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                model.objects.bulk_create(
+                    model(**data) for data in reader
+                )
+                self.stdout.write(
+                    self.style.SUCCESS('Данные из файла загружены')
+                )
+        else:
+            with open(
+                f'{PATH_TO_FILE}{name_file}', 'r', encoding='utf-8'
+            ) as csvfile:
+                reader = csv.DictReader(csvfile)
+                for data in reader:
+                    user = User.objects.get(id=data.get('user_id'))
+                    team = Team.objects.get(id=data.get('team_id'))
+                    team.employees.add(user)
+                self.stdout.write(
+                    self.style.SUCCESS('Данные из файла загружены')
+                )

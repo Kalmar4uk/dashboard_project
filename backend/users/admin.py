@@ -5,8 +5,17 @@ from django.utils.translation import gettext_lazy as _
 from .models import User, Team
 
 
+class UserInlines(admin.TabularInline):
+    model = Team.employees.through
+
+
+class TeamInlines(admin.TabularInline):
+    model = User.teams.through
+
+
 @admin.register(User)
 class UserAdmin(UserAdmin):
+    inlines = (TeamInlines,)
     model = User
     list_display = (
         'email',
@@ -16,13 +25,13 @@ class UserAdmin(UserAdmin):
         'date_accession',
         'is_deleted'
     )
-    list_filter = ('is_deleted', 'job_title', 'grade', 'team')
+    list_filter = ('is_deleted', 'job_title', 'grade')
     fieldsets = (
         (None, {'fields': (
             'email', 'password',
         )}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
-        ('Работа', {'fields': ('grade', 'job_title', 'team', 'date_accession')}),
+        ('Работа', {'fields': ('grade', 'job_title', 'date_accession')}),
         (_('Permissions'), {
             'fields': ('is_active', 'is_superuser', 'is_staff', 'is_deleted')
             }),
@@ -53,9 +62,10 @@ class UserAdmin(UserAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
+    inlines = (UserInlines,)
     list_display = (
         'name',
-        'create_date'
+        'create_date',
     )
     fieldsets = (
         (None, {'fields': (
