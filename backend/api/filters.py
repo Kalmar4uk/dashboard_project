@@ -1,12 +1,13 @@
 from django_filters import rest_framework as filters
 
 from users.models import User, Team
+from competencies.models import EmployeeSkills
 
 
 class UserInTeamFilter(filters.FilterSet):
-    team = filters.ModelMultipleChoiceFilter(
+    team = filters.ModelChoiceFilter(
         queryset=Team.objects.all(),
-        field_name='team__name',
+        field_name='teams__name',
         to_field_name='name'
     )
 

@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.password_validation import validate_password
-from django.db.models import Avg
+from django.db.models import Avg, Count, Q
 from rest_framework import serializers
 import random
 
@@ -69,6 +69,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     )
     teams = serializers.StringRelatedField(read_only=True, many=True)
     competence = serializers.SerializerMethodField(read_only=True)
+    coef_conformity = serializers.SerializerMethodField(read_only=True)
     is_deleted = serializers.BooleanField()
 
     class Meta:
@@ -80,6 +81,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'job_title',
             'grade',
             'competence',
+            'coef_conformity',
             'teams',
             'date_accession',
             'is_deleted'
@@ -123,6 +125,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'soft_skills': round(soft_skill, 2)
         }
 
+    def get_coef_conformity(self, obj):
+        user = EmployeeSkills.objects.filter(user=obj)
+        accordance_all = user.filter(Q(accordance=True) | Q(accordance=False))
+        accordance_true = accordance_all.filter(accordance=True).count()
+        return round(accordance_true / accordance_all.count(), 2)
+
 
 class UserSerializerForTeam(EmployeeSerializer):
 
@@ -142,7 +150,7 @@ class TeamSerializer(serializers.ModelSerializer):
     '''Сериализатор для команд.'''
     stress_level = serializers.SerializerMethodField()
     employee_count = serializers.IntegerField(
-        source='users.count',
+        source='employees.count',
         read_only=True
     )
     employees = UserSerializerForTeam(many=True)
@@ -198,19 +206,7 @@ class TeamSerializer(serializers.ModelSerializer):
 
     def get_bus_factor(self, obj):
         users = self.find_users_or_skills_avg(obj)
-        skill_set = set()
-        find_skills = []
-        # for user in users:
-        #     skills_names = user.user_employeeskills.values('competence__name').filter(competence__domen='Hard skills')
-        #     for skill in skills_names:
-        #         skill_set.add(skill.get('competence__name'))
-        # for skill in skill_set:
-        #     for user in users:
-        #         skill_user = EmployeeSkills.objects.filter(competence__name=skill)
-        #         print(skill_user)
-        #         if skill_user:
-        #             find_skills.append(skill_user)
-        return obj.id
+        return UserSerializerForTeam(users[0]).data
 
 
 class TeamWriteSerializer(serializers.ModelSerializer):

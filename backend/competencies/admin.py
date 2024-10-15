@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (
-    Skills, EmployeeSkills, IndividualDevelopmentPlan
+    Skills, EmployeeSkills, IndividualDevelopmentPlan, MinScoreByGrade
 )
 
 
@@ -10,6 +10,7 @@ class EmployeeSkillsAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'competence',
+        'date_evaluation',
         'is_deleted'
     )
     list_filter = (
@@ -18,7 +19,7 @@ class EmployeeSkillsAdmin(admin.ModelAdmin):
         'competence'
     )
     search_fields = (
-        'user',
+        'user__first_name', 'user__last_name'
     )
 
 
@@ -35,3 +36,4 @@ class SkillsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(IndividualDevelopmentPlan)
+admin.site.register(MinScoreByGrade)
