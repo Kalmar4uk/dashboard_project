@@ -141,7 +141,8 @@ class UserSerializerForTeam(EmployeeSerializer):
             'last_name',
             'job_title',
             'grade',
-            'competence'
+            'competence',
+            'coef_conformity'
         )
         model = User
 

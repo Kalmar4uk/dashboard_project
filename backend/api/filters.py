@@ -13,4 +13,4 @@ class UserInTeamFilter(filters.FilterSet):
 
     class Meta:
         model = User
-        fields = ('team', 'job_title', 'grade')
+        fields = ('first_name', 'last_name', 'team', 'job_title', 'grade')
