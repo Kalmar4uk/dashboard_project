@@ -1,3 +1,5 @@
+import os
+
 from datetime import timedelta
 from pathlib import Path
 
@@ -8,7 +10,7 @@ SECRET_KEY = 'django-insecure--^6r0@q4y%nrca5$r&3djl*zk)0y7u!9=#(31bz34*k%5-9gs4
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 INSTALLED_APPS = [
@@ -19,7 +21,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
     'django_filters',
     'rest_framework_simplejwt.token_blacklist',
     'users.apps.UsersConfig',
@@ -63,8 +64,12 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'fake_db'),
+        'USER': os.getenv('POSTGRES_USER', 'fake_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
@@ -93,10 +98,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-CORS_ORIGIN_ALLOW_ALL = True
-
-CORS_URLS_REGEX = r'^/api/.*$'
 
 STATIC_URL = 'static/'
 
