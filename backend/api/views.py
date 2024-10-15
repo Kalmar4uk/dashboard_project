@@ -16,6 +16,7 @@ from .serializers import (
     DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer,
     UpdateUserPasswordSerializer, TeamWriteSerializer, UpdateUserTeamSerializer, CreateDeleteUserTeamSerilalizer
 )
+from .paginations import EmployeePagination
 from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
 from .filters import UserInTeamFilter
 from users.models import Team
@@ -79,6 +80,7 @@ class EmployViewSet(UserAndEmployViewSet):
     http_method_names = ('get', 'put', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = UserInTeamFilter
+    pagination_class = EmployeePagination
 
     @action(url_path='me', detail=False)
     def get_users_info(self, request):
