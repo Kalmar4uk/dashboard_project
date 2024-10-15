@@ -4,7 +4,7 @@ from django.db.models import Avg, Count, Q
 from rest_framework import serializers
 import random
 
-from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
+from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills, MinScoreByGrade
 from users.models import Team
 
 from .constants import GRADE, JOB_TITLE
@@ -328,18 +328,59 @@ class CreateDeleteUserTeamSerilalizer(serializers.Serializer):
 
 class DevelopmentSerializer(serializers.ModelSerializer):
     '''Сериализатор индивидуального плана развития.'''
-    employee_id = serializers.IntegerField(source='user.id', read_only=True)
+    employee = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='user',
+    )
+    low_skills = serializers.ListField(
+        child=serializers.CharField(),
+        read_only=True
+    )
 
     class Meta:
         fields = (
             'id',
-            'employee_id',
+            'employee',
             'target',
             'start_date',
             'end_date',
             'status',
+            'low_skills',
         )
         model = IndividualDevelopmentPlan
+
+    def create(self, validated_data):
+        user = validated_data.pop('user')
+
+        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        min_scores = MinScoreByGrade.objects.all()
+        low_skills = set()
+
+        for skill in employee_skills:
+            min_score = min_scores.filter(competence=skill.competence.name).first()
+            if min_score:
+                if skill.value_evaluation < min_score.min_score:
+                    low_skills.add(skill.competence.name)
+
+        dev_plan = IndividualDevelopmentPlan.objects.create(user=user, **validated_data)
+        dev_plan.save()
+
+        return dev_plan
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user = instance.user
+        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        min_scores = MinScoreByGrade.objects.all()
+        low_skills = set()
+
+        for skill in employee_skills:
+            min_score = min_scores.filter(competence=skill.competence.name).first()
+            if min_score and skill.value_evaluation < min_score.min_score:
+                low_skills.add(skill.competence.name)
+
+        representation['low_skills'] = low_skills
+        return representation
 
 
 class SkillSerializer(serializers.ModelSerializer):
