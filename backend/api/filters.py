@@ -1,7 +1,6 @@
 from django_filters import rest_framework as filters
 
-from users.models import User, Team
-from competencies.models import EmployeeSkills
+from users.models import Team, User
 
 
 class UserInTeamFilter(filters.FilterSet):

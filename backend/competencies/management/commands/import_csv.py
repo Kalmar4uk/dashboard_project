@@ -3,8 +3,8 @@ import csv
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from competencies.models import EmployeeSkills, MinScoreByGrade, Skills
 from users.models import Team, User
-from competencies.models import Skills, EmployeeSkills, MinScoreByGrade
 
 PATH_TO_FILE = f'{settings.BASE_DIR}/data/'
 
@@ -19,7 +19,8 @@ MODELS = {
 
 class Command(BaseCommand):
     '''Команда:'''
-    '''python manage.py import_csv имя файла.csv --name_model название модели'''
+    '''python manage.py import_csv имя файла.csv'''
+    '''--name_model название модели'''
     help = 'Команда импорта .csv файлов'
 
     def add_arguments(self, parser):

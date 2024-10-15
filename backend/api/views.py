@@ -1,29 +1,31 @@
-from django.contrib.auth import get_user_model
-from django.db.models import Avg, Q
-from rest_framework.decorators import action, api_view, permission_classes
-from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
-from django_filters.rest_framework import DjangoFilterBackend
 from datetime import date
 
-from .serializers import (
-    TokenSerializer, SkillSerializer, TeamSerializer,
-    DevelopmentSerializer, EmployeeSerializer, EmployeeSkillsSerializer,
-    UpdateUserPasswordSerializer, TeamWriteSerializer, UpdateUserTeamSerializer, CreateDeleteUserTeamSerilalizer
-)
-from .paginations import EmployeePagination
-from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
-from .filters import UserInTeamFilter
+from django.db.models import Avg, Q
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
+                                 Skills, User)
 from users.models import Team
+
+from .filters import UserInTeamFilter
+from .paginations import EmployeePagination
+from .serializers import (CreateDeleteUserTeamSerilalizer,
+                          DevelopmentSerializer, EmployeeSerializer,
+                          EmployeeSkillsSerializer, SkillSerializer,
+                          TeamSerializer, TeamWriteSerializer, TokenSerializer,
+                          UpdateUserPasswordSerializer,
+                          UpdateUserTeamSerializer)
 
 
 class APIToken(APIView):
-    permission_classes = [AllowAny,]
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
@@ -92,68 +94,100 @@ class EmployViewSet(UserAndEmployViewSet):
     def users_analytics(self, request, pk):
         user = User.objects.get(id=pk)
         analytics = EmployeeSkills.objects.filter(user=user)
-        hard_skills_one = analytics.filter(competence__domen='Hard skills').filter(
+        hard_skills_one = analytics.filter(
+            competence__domen='Hard skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_two = analytics.filter(competence__domen='Hard skills').filter(
+        hard_skills_two = analytics.filter(
+            competence__domen='Hard skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_three = analytics.filter(competence__domen='Hard skills').filter(
+        hard_skills_three = analytics.filter(
+            competence__domen='Hard skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_four = analytics.filter(competence__domen='Hard skills').filter(
+        hard_skills_four = analytics.filter(
+            competence__domen='Hard skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_one = analytics.filter(competence__domen='Soft skills').filter(
+        soft_skills_one = analytics.filter(
+            competence__domen='Soft skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_two = analytics.filter(competence__domen='Soft skills').filter(
+        soft_skills_two = analytics.filter(
+            competence__domen='Soft skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_three = analytics.filter(competence__domen='Soft skills').filter(
+        soft_skills_three = analytics.filter(
+            competence__domen='Soft skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_four = analytics.filter(competence__domen='Soft skills').filter(
+        soft_skills_four = analytics.filter(
+            competence__domen='Soft skills'
+        ).filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        accordance_one_all = analytics.filter(Q(accordance=True) | Q(accordance=False)).filter(
+        accordance_one_all = analytics.filter(
+            Q(accordance=True) | Q(accordance=False)
+        ).filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             ))
-        accordance_two_all = analytics.filter(Q(accordance=True) | Q(accordance=False)).filter(
+        accordance_two_all = analytics.filter(
+            Q(accordance=True) | Q(accordance=False)
+        ).filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             ))
-        accordance_three_all = analytics.filter(Q(accordance=True) | Q(accordance=False)).filter(
+        accordance_three_all = analytics.filter(
+            Q(accordance=True) | Q(accordance=False)
+        ).filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             ))
-        accordance_four_all = analytics.filter(Q(accordance=True) | Q(accordance=False)).filter(
+        accordance_four_all = analytics.filter(
+            Q(accordance=True) | Q(accordance=False)
+        ).filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             ))
         try:
-            accordance_one = accordance_one_all.filter(accordance=True).count() / accordance_one_all.count()
+            accordance_one = accordance_one_all.filter(
+                accordance=True
+            ).count() / accordance_one_all.count()
         except Exception:
             accordance_one = None
         try:
-            accordance_two = accordance_two_all.filter(accordance=True).count() / accordance_two_all.count()
+            accordance_two = accordance_two_all.filter(
+                accordance=True
+            ).count() / accordance_two_all.count()
         except Exception:
             accordance_two = None
         try:
-            accordance_three = accordance_three_all.filter(accordance=True).count() / accordance_three_all.count()
+            accordance_three = accordance_three_all.filter(
+                accordance=True
+            ).count() / accordance_three_all.count()
         except Exception:
             accordance_three = None
         try:
-            accordance_four = accordance_four_all.filter(accordance=True).count() / accordance_four_all.count()
+            accordance_four = accordance_four_all.filter(
+                accordance=True
+            ).count() / accordance_four_all.count()
         except Exception:
             accordance_four = None
 

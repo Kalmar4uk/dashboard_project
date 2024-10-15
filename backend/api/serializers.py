@@ -1,10 +1,12 @@
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.password_validation import validate_password
-from django.db.models import Avg, Count, Q
-from rest_framework import serializers
 import random
 
-from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills
+from django.contrib.auth.password_validation import validate_password
+from django.db.models import Avg, Q
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+
+from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
+                                 Skills, User)
 from users.models import Team
 
 from .constants import GRADE, JOB_TITLE
