@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from drf_yasg.utils import swagger_auto_schema
+
 from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
                                  Skills, User)
 from users.models import Team
@@ -51,6 +53,7 @@ class APIToken(APIView):
 
 class DeleteAPIToken(APIView):
 
+    @swagger_auto_schema(operation_description="description")
     def post(self, request):
         refresh_token = request.data.get('refresh_token')
         if not refresh_token:

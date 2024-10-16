@@ -3,16 +3,19 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = os.getenv('SECRET_KEY')
 
-SECRET_KEY = 'django-insecure--^6r0@q4y%nrca5$r&3djl*zk)0y7u!9=#(31bz34*k%5-9gs4'
+DEBUG = (os.getenv('DEBUG', 'False') == 'True')
 
-DEBUG = True
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'dashboard-hakaton.hopto.org', '84.201.148.22']
-
-CSRF_TRUSTED_ORIGINS=["https://dashboard-hakaton.hopto.org"]
+CSRF_TRUSTED_ORIGINS = ["https://dashboard-hakaton.hopto.org"]
 
 
 INSTALLED_APPS = [
