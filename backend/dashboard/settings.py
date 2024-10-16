@@ -10,7 +10,9 @@ SECRET_KEY = 'django-insecure--^6r0@q4y%nrca5$r&3djl*zk)0y7u!9=#(31bz34*k%5-9gs4
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'dashboard-hakaton.hopto.org', '84.201.148.22']
+
+CSRF_TRUSTED_ORIGINS=["https://dashboard-hakaton.hopto.org"]
 
 
 INSTALLED_APPS = [
@@ -20,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'django_filters',
     'rest_framework_simplejwt.token_blacklist',
@@ -74,6 +77,7 @@ DATABASES = {
 }
 
 
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -100,6 +104,12 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / 'collected_static'
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_URLS_REGEX = r'^/api/.*$'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
