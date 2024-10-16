@@ -3,7 +3,7 @@
 ### По адресу https://dashboard-hakaton.hopto.org/redoc/ размещена документация к API
 
 В проекте используется:
-* python3.11
+* Python3.11
 * Django==4.2
 * Django rest framework==3.15.2
 
