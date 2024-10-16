@@ -38,6 +38,13 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
+*Перейти в директорию с файлом manage.py и создать администратора*
+
+```
+python manage.py createsuperuser
+```
+Необходимо ввести email и пароль, это нужно для получения jwt-токена, так как формы регистрации на портале нет
+
 *Перейти в директорию с файлом manage.py и прописать команду*
 ```
 python manage.py import_csv file_name.csv --model_name model
@@ -46,7 +53,7 @@ python manage.py import_csv file_name.csv --model_name model
 * *file_name.csv* - название файла для загрузки
 * *--model_name model* - "--model_name" устанавливается для указания модели, "model" - название модели
 
-* csv-файлы для прогрущки находятся в папке ```backend/data```
+* csv-файлы для прогрузки находятся в папке ```backend/data```
 
 
 
