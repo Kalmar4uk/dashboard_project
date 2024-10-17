@@ -9,7 +9,7 @@ from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
                                  Skills, User)
 from users.models import Team
 
-from .constants import GRADE, JOB_TITLE
+from .constants import GRADE, JOB_TITLE, STRESS_LVL_USER
 from .validators import validate_first_and_last_name
 
 
@@ -72,6 +72,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     teams = serializers.StringRelatedField(read_only=True, many=True)
     competence = serializers.SerializerMethodField(read_only=True)
     coef_conformity = serializers.SerializerMethodField(read_only=True)
+    stress_level = serializers.SerializerMethodField(read_only=True)
     is_deleted = serializers.BooleanField()
 
     class Meta:
@@ -84,6 +85,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'grade',
             'competence',
             'coef_conformity',
+            'stress_level',
             'teams',
             'date_accession',
             'is_deleted'
@@ -133,6 +135,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
         accordance_true = accordance_all.filter(accordance=True).count()
         return round(accordance_true / accordance_all.count(), 2)
 
+    def get_stress_level(self, obj):
+        '''По сотруднику'''
+        teams_user = obj.teams.count()
+        stress_lvl = teams_user * 0.5
+        return stress_lvl
+
 
 class UserSerializerForTeam(EmployeeSerializer):
 
@@ -143,6 +151,7 @@ class UserSerializerForTeam(EmployeeSerializer):
             'last_name',
             'job_title',
             'grade',
+            'stress_level',
             'competence',
             'coef_conformity'
         )
@@ -195,7 +204,12 @@ class TeamSerializer(serializers.ModelSerializer):
         return result
 
     def get_stress_level(self, obj):
-        return random.randint(1, 5)
+        '''По команде'''
+        users = self.find_users_or_skills_avg(obj)
+        overall_stress_level = 0
+        for user in users:
+            overall_stress_level += (user.teams.count() * 0.5)
+        return overall_stress_level
 
     def get_average_hard_skills(self, obj):
         competence = 'Hard skills'
@@ -213,22 +227,22 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class TeamWriteSerializer(serializers.ModelSerializer):
-    users = serializers.PrimaryKeyRelatedField(
+    employees = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), many=True
     )
 
     class Meta:
         fields = (
             "name",
-            "users"
+            "employees"
         )
         model = Team
 
     def create(self, validated_data):
-        users = validated_data.pop('users')
+        employees = validated_data.pop('employees')
         team = Team.objects.create(**validated_data)
-        for user in users:
-            User.objects.filter(id=user.id).update(team=team)
+        for emoliyee in employees:
+            User.objects.filter(id=emoliyee.id).update(team=team)
         return team
 
     def to_representation(self, instance):
