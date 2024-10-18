@@ -5,7 +5,8 @@ from django.db.models import Avg, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from competencies.models import User, Skills, IndividualDevelopmentPlan, EmployeeSkills, MinScoreByGrade
+from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
+                                 MinScoreByGrade, Skills, User)
 from users.models import Team
 
 from .constants import GRADE, JOB_TITLE, STRESS_LVL_USER
