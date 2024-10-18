@@ -73,7 +73,7 @@ class MinScoreByGrade(models.Model):
 
     def __str__(self):
         return (
-            f'Минимальная оценка для должности {self.job_title}'
+            f'Минимальная оценка для должности {self.job_title} '
             f'и грейда {self.grade} по навыку {self.competence}'
         )
 
@@ -85,7 +85,7 @@ class IndividualDevelopmentPlan(models.Model):
     )
     target = models.CharField('Цель', max_length=50)
     start_date = models.DateField('Дата начала')
-    end_date = models.DateField('Дата окончания',)
+    end_date = models.DateField('Дата окончания')
     status = models.CharField('Статус', max_length=15)
     is_deleted = models.BooleanField(default=False)
 

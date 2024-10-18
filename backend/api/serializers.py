@@ -1,5 +1,3 @@
-import random
-
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Avg, Q
 from django.shortcuts import get_object_or_404
@@ -140,6 +138,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def get_stress_level(self, obj):
         '''По сотруднику'''
         teams_user = obj.teams.count()
+        if teams_user == 0:
+            return 0
         stress_lvl = STRESS_LVL_USER[teams_user]
         return stress_lvl
 
@@ -217,7 +217,7 @@ class TeamSerializer(serializers.ModelSerializer):
         overall_stress_level = 0
         for user in users:
             overall_stress_level += STRESS_LVL_USER[user.teams.count()]
-        return overall_stress_level / users.count()
+        return round(overall_stress_level / users.count(), 2)
 
     def get_average_hard_skills(self, obj):
         competence = 'Hard skills'
