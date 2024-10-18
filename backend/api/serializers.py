@@ -92,6 +92,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
         )
         model = User
 
+    def get_hard_skills(self, user, skill):
+        competence = user.user_employeeskills.all()
+        avg_skill = competence.filter(
+            competence__domen=skill
+            ).aggregate(
+                Avg('value_evaluation')
+                )['value_evaluation__avg']
+        return avg_skill
+
     def validate_grade(self, obj):
         obj = obj.title()
         if obj not in GRADE:
@@ -109,17 +118,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return obj
 
     def get_competence(self, obj):
-        competence = obj.user_employeeskills.all()
-        hard_skill = competence.filter(
-            competence__domen='Hard skills'
-            ).aggregate(
-                Avg('value_evaluation')
-                )['value_evaluation__avg']
-        soft_skill = competence.filter(
-            competence__domen='Soft skills'
-            ).aggregate(
-                Avg('value_evaluation')
-                )['value_evaluation__avg']
+        hard_skill = self.get_hard_skills(obj, 'Hard skills')
+        soft_skill = self.get_hard_skills(obj, 'Soft skills')
         if hard_skill is None:
             hard_skill = 0
         if soft_skill is None:
@@ -132,17 +132,20 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def get_coef_conformity(self, obj):
         user = EmployeeSkills.objects.filter(user=obj)
         accordance_all = user.filter(Q(accordance=True) | Q(accordance=False))
+        if not accordance_all:
+            return 0
         accordance_true = accordance_all.filter(accordance=True).count()
         return round(accordance_true / accordance_all.count(), 2)
 
     def get_stress_level(self, obj):
         '''По сотруднику'''
         teams_user = obj.teams.count()
-        stress_lvl = teams_user * 0.5
+        stress_lvl = STRESS_LVL_USER[teams_user]
         return stress_lvl
 
 
 class UserSerializerForTeam(EmployeeSerializer):
+    bus_factor = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         fields = (
@@ -153,9 +156,16 @@ class UserSerializerForTeam(EmployeeSerializer):
             'grade',
             'stress_level',
             'competence',
-            'coef_conformity'
+            'coef_conformity',
+            'bus_factor'
         )
         model = User
+
+    def get_bus_factor(self, obj):
+        lvl_skills = self.get_competence(obj)
+        if lvl_skills.get('hard_skills') >= 4:
+            return True
+        return False
 
 
 class TeamSerializer(serializers.ModelSerializer):
@@ -168,7 +178,6 @@ class TeamSerializer(serializers.ModelSerializer):
     employees = UserSerializerForTeam(many=True)
     average_hard_skills = serializers.SerializerMethodField(read_only=True)
     average_soft_skills = serializers.SerializerMethodField(read_only=True)
-    bus_factor = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         fields = (
@@ -180,7 +189,6 @@ class TeamSerializer(serializers.ModelSerializer):
             'average_hard_skills',
             'average_soft_skills',
             'employees',
-            'bus_factor'
         )
         model = Team
 
@@ -208,8 +216,8 @@ class TeamSerializer(serializers.ModelSerializer):
         users = self.find_users_or_skills_avg(obj)
         overall_stress_level = 0
         for user in users:
-            overall_stress_level += (user.teams.count() * 0.5)
-        return overall_stress_level
+            overall_stress_level += STRESS_LVL_USER[user.teams.count()]
+        return overall_stress_level / users.count()
 
     def get_average_hard_skills(self, obj):
         competence = 'Hard skills'
@@ -220,10 +228,6 @@ class TeamSerializer(serializers.ModelSerializer):
         competence = 'Soft skills'
         result = self.find_users_or_skills_avg(obj, competence)
         return result
-
-    def get_bus_factor(self, obj):
-        users = self.find_users_or_skills_avg(obj)
-        return UserSerializerForTeam(users[0]).data
 
 
 class TeamWriteSerializer(serializers.ModelSerializer):
