@@ -71,7 +71,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     competence = serializers.SerializerMethodField(read_only=True)
     coef_conformity = serializers.SerializerMethodField(read_only=True)
     stress_level = serializers.SerializerMethodField(read_only=True)
-    is_deleted = serializers.BooleanField()
 
     class Meta:
         fields = (
@@ -86,7 +85,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'stress_level',
             'teams',
             'date_accession',
-            'is_deleted'
+            'employee'
         )
         model = User
 
@@ -372,17 +371,23 @@ class DevelopmentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = validated_data.pop('user')
 
-        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        employee_skills = EmployeeSkills.objects.filter(
+            user=user, is_deleted=False
+        )
         min_scores = MinScoreByGrade.objects.all()
         low_skills = set()
 
         for skill in employee_skills:
-            min_score = min_scores.filter(competence=skill.competence.name).first()
+            min_score = min_scores.filter(
+                competence=skill.competence.name
+            ).first()
             if min_score:
                 if skill.value_evaluation < min_score.min_score:
                     low_skills.add(skill.competence.name)
 
-        dev_plan = IndividualDevelopmentPlan.objects.create(user=user, **validated_data)
+        dev_plan = IndividualDevelopmentPlan.objects.create(
+            user=user, **validated_data
+        )
         dev_plan.save()
 
         return dev_plan
@@ -390,12 +395,16 @@ class DevelopmentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = instance.user
-        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        employee_skills = EmployeeSkills.objects.filter(
+            user=user, is_deleted=False
+        )
         min_scores = MinScoreByGrade.objects.all()
         low_skills = set()
 
         for skill in employee_skills:
-            min_score = min_scores.filter(competence=skill.competence.name).first()
+            min_score = min_scores.filter(
+                competence=skill.competence.name
+            ).first()
             if min_score and skill.value_evaluation < min_score.min_score:
                 low_skills.add(skill.competence.name)
 

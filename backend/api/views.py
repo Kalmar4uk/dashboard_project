@@ -68,7 +68,7 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         user = User.objects.filter(
             id=self.kwargs.get('pk')
-            ).update(is_deleted=True)
+            ).update(is_active=False)
         if user:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -77,7 +77,7 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
 
 
 class EmployViewSet(UserAndEmployViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(employee=True)
     serializer_class = EmployeeSerializer
     http_method_names = ('get', 'put', 'delete')
     filter_backends = (DjangoFilterBackend,)

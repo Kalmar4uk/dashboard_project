@@ -23,17 +23,18 @@ class UserAdmin(UserAdmin):
         'last_name',
         'job_title',
         'date_accession',
-        'is_deleted'
     )
-    list_filter = ('is_deleted', 'job_title', 'grade')
+    list_filter = ('job_title', 'grade')
     fieldsets = (
         (None, {'fields': (
             'email', 'password',
         )}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
-        ('Работа', {'fields': ('grade', 'job_title', 'date_accession')}),
+        ('Работа', {'fields': (
+            'grade', 'job_title', 'date_accession', 'employee'
+            )}),
         (_('Permissions'), {
-            'fields': ('is_active', 'is_superuser', 'is_staff', 'is_deleted')
+            'fields': ('is_active', 'is_superuser', 'is_staff')
             }),
     )
     add_fieldsets = (
@@ -48,6 +49,7 @@ class UserAdmin(UserAdmin):
                     'last_name',
                     'job_title',
                     'grade',
+                    'employee',
                     'is_superuser',
                     'is_staff',
                     'is_active'

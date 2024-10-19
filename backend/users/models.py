@@ -11,8 +11,12 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     job_title = models.CharField('Должность', max_length=50)
     grade = models.CharField('Грейд', max_length=6)
+    employee = models.BooleanField(
+        'Сотрудник',
+        default=True,
+        help_text='Отметить, если является сотрудником'
+    )
     date_accession = models.DateField('Дата устройства', auto_now_add=True)
-    is_deleted = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
