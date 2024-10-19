@@ -40,6 +40,7 @@ class TokenSerializer(serializers.Serializer):
 
 
 class UpdateUserPasswordSerializer(serializers.Serializer):
+    '''Сериализатор обновления пароля'''
     new_password = serializers.CharField(required=True)
     current_password = serializers.CharField(required=True)
 
@@ -61,6 +62,7 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
+    '''Сериализатор сотрудника'''
     first_name = serializers.CharField(
         max_length=150, validators=[validate_first_and_last_name]
     )
@@ -136,7 +138,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return round(accordance_true / accordance_all.count(), 2)
 
     def get_stress_level(self, obj):
-        '''По сотруднику'''
         teams_user = obj.teams.count()
         if teams_user == 0:
             return 0
@@ -145,6 +146,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializerForTeam(EmployeeSerializer):
+    '''Сериализатор сотрудника для отображение в команде'''
+    id = serializers.IntegerField()
     bus_factor = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -212,7 +215,6 @@ class TeamSerializer(serializers.ModelSerializer):
         return result
 
     def get_stress_level(self, obj):
-        '''По команде'''
         users = self.find_users_or_skills_avg(obj)
         overall_stress_level = 0
         for user in users:
@@ -231,22 +233,21 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class TeamWriteSerializer(serializers.ModelSerializer):
-    employees = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True
-    )
+    '''Сериализатор создания команды'''
+    employees = UserSerializerForTeam(many=True)
 
     class Meta:
         fields = (
-            "name",
-            "employees"
+            'name',
+            'employees'
         )
         model = Team
 
     def create(self, validated_data):
         employees = validated_data.pop('employees')
-        team = Team.objects.create(**validated_data)
-        for emoliyee in employees:
-            User.objects.filter(id=emoliyee.id).update(team=team)
+        team = Team.objects.get_or_create(**validated_data)
+        for emoloyee in employees:
+            User.objects.filter(id=emoloyee.id).update(team=team)
         return team
 
     def to_representation(self, instance):
@@ -255,51 +256,63 @@ class TeamWriteSerializer(serializers.ModelSerializer):
         }).data
 
 
-class UpdateUserTeamSerializer(serializers.Serializer):
-    user_in_team = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
-    new_user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
-    )
+class UpdateTeamSerializer(serializers.Serializer):
+    '''Сериализатор обновления команды'''
+    employees = UserSerializerForTeam()
+    employees_new = UserSerializerForTeam(required=False)
 
     class Meta:
         fields = (
-            'user_in_team',
-            'new_user'
+            'employees',
+            'employees_new'
         )
 
-    def validate_user_in_team(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                'Необходимо добавить сотрудника на изменение!'
-            )
-        user = User.objects.get(id=value.id)
+    def find_team(self, value):
+        user = User.objects.get(id=value.get('id'))
         team_id = self.context.get(
             'request'
         ).parser_context.get('kwargs').get('pk')
         team = Team.objects.filter(id=team_id, employees=user)
+        return team
+
+    def validate_employees(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                {
+                    'not_filed_employee':
+                    'Не получен сотрудник'
+                }
+            )
+        team = self.find_team(value)
         if not team:
             raise serializers.ValidationError(
                 'Сотрудника нет в команде!'
             )
         return value
 
-    def validate_new_user(self, value):
+    def validate_employees_new(self, value):
         if not value:
             raise serializers.ValidationError(
-                'Необходимо добавить сотрудника для изменения'
+                {
+                    'not_filed_employee':
+                    'Не получен новый сотрудник'
+                }
             )
-        user = User.objects.get(id=value.id)
-        team_id = self.context.get(
-            'request'
-        ).parser_context.get('kwargs').get('pk')
-        team = Team.objects.filter(id=team_id, employees=user)
+        team = self.find_team(value)
         if team:
             raise serializers.ValidationError(
                 'Сотрудник уже находится в команде!'
             )
         return value
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        employees = validated_data.pop('employees')
+        new_employees = validated_data.get('employees_new')
+        instance.employees.remove(employees.get('id'))
+        instance.employees.add(new_employees.get('id'))
+        instance.save()
+        return instance
 
     def to_representation(self, instance):
         return TeamSerializer(instance, context={
@@ -372,17 +385,23 @@ class DevelopmentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = validated_data.pop('user')
 
-        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        employee_skills = EmployeeSkills.objects.filter(
+            user=user, is_deleted=False
+        )
         min_scores = MinScoreByGrade.objects.all()
         low_skills = set()
 
         for skill in employee_skills:
-            min_score = min_scores.filter(competence=skill.competence.name).first()
+            min_score = min_scores.filter(
+                competence=skill.competence.name
+            ).first()
             if min_score:
                 if skill.value_evaluation < min_score.min_score:
                     low_skills.add(skill.competence.name)
 
-        dev_plan = IndividualDevelopmentPlan.objects.create(user=user, **validated_data)
+        dev_plan = IndividualDevelopmentPlan.objects.create(
+            user=user, **validated_data
+        )
         dev_plan.save()
 
         return dev_plan
@@ -390,12 +409,16 @@ class DevelopmentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         user = instance.user
-        employee_skills = EmployeeSkills.objects.filter(user=user, is_deleted=False)
+        employee_skills = EmployeeSkills.objects.filter(
+            user=user, is_deleted=False
+        )
         min_scores = MinScoreByGrade.objects.all()
         low_skills = set()
 
         for skill in employee_skills:
-            min_score = min_scores.filter(competence=skill.competence.name).first()
+            min_score = min_scores.filter(
+                competence=skill.competence.name
+            ).first()
             if min_score and skill.value_evaluation < min_score.min_score:
                 low_skills.add(skill.competence.name)
 

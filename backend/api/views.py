@@ -3,10 +3,9 @@ from datetime import date
 from django.db.models import Avg, Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -22,7 +21,7 @@ from .serializers import (CreateDeleteUserTeamSerilalizer,
                           EmployeeSkillsSerializer, SkillSerializer,
                           TeamSerializer, TeamWriteSerializer, TokenSerializer,
                           UpdateUserPasswordSerializer,
-                          UpdateUserTeamSerializer)
+                          UpdateTeamSerializer)
 
 
 class APIToken(APIView):
@@ -94,76 +93,59 @@ class EmployViewSet(UserAndEmployViewSet):
     @action(url_path='analytics', detail=True)
     def users_analytics(self, request, pk):
         user = User.objects.get(id=pk)
-        analytics = EmployeeSkills.objects.filter(user=user)
-        hard_skills_one = analytics.filter(
-            competence__domen='Hard skills'
-        ).filter(
+        analytics = EmployeeSkills.objects.filter(
+            user=user
+        )
+        hard_skills = analytics.filter(competence__domen='Hard skills')
+        soft_skills = analytics.filter(competence__domen='Soft skills')
+        accordance = analytics.filter(
+            Q(accordance=True) | Q(accordance=False)
+        )
+        hard_skills_one = hard_skills.filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_two = analytics.filter(
-            competence__domen='Hard skills'
-        ).filter(
+        hard_skills_two = hard_skills.filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_three = analytics.filter(
-            competence__domen='Hard skills'
-        ).filter(
+        hard_skills_three = hard_skills.filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        hard_skills_four = analytics.filter(
-            competence__domen='Hard skills'
-        ).filter(
+        hard_skills_four = hard_skills.filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_one = analytics.filter(
-            competence__domen='Soft skills'
-        ).filter(
+        soft_skills_one = soft_skills.filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_two = analytics.filter(
-            competence__domen='Soft skills'
-        ).filter(
+        soft_skills_two = soft_skills.filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_three = analytics.filter(
-            competence__domen='Soft skills'
-        ).filter(
+        soft_skills_three = soft_skills.filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        soft_skills_four = analytics.filter(
-            competence__domen='Soft skills'
-        ).filter(
+        soft_skills_four = soft_skills.filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             )).aggregate(Avg('value_evaluation'))['value_evaluation__avg']
-        accordance_one_all = analytics.filter(
-            Q(accordance=True) | Q(accordance=False)
-        ).filter(
+        accordance_one_all = accordance.filter(
             date_evaluation__range=(
                 date(2024, 1, 1), date(2024, 3, 30)
             ))
-        accordance_two_all = analytics.filter(
-            Q(accordance=True) | Q(accordance=False)
-        ).filter(
+        accordance_two_all = accordance.filter(
             date_evaluation__range=(
                 date(2024, 4, 1), date(2024, 6, 30)
             ))
-        accordance_three_all = analytics.filter(
-            Q(accordance=True) | Q(accordance=False)
-        ).filter(
+        accordance_three_all = accordance.filter(
             date_evaluation__range=(
                 date(2024, 7, 1), date(2024, 9, 30)
             ))
-        accordance_four_all = analytics.filter(
-            Q(accordance=True) | Q(accordance=False)
-        ).filter(
+        accordance_four_all = accordance.filter(
             date_evaluation__range=(
                 date(2024, 10, 1), date(2024, 12, 31)
             ))
@@ -194,23 +176,25 @@ class EmployViewSet(UserAndEmployViewSet):
 
         return Response(
             {
-                'hard_skills': {
-                    'hard_skills_one': hard_skills_one,
-                    'hard_skills_two': hard_skills_two,
-                    'hard_skills_three': hard_skills_three,
-                    'hard_skills_four': hard_skills_four
-                },
-                'soft_skills': {
-                    'soft_skills_one': soft_skills_one,
-                    'soft_skills_two': soft_skills_two,
-                    'soft_skills_three': soft_skills_three,
-                    'soft_skills_four': soft_skills_four
-                },
-                'accordance': {
-                    'accordance_one': accordance_one,
-                    'accordance_two': accordance_two,
-                    'accordance_three': accordance_three,
-                    'accordance_four': accordance_four
+                'analytics': {
+                    'hard_skills': {
+                        'hard_skills_one': hard_skills_one,
+                        'hard_skills_two': hard_skills_two,
+                        'hard_skills_three': hard_skills_three,
+                        'hard_skills_four': hard_skills_four
+                    },
+                    'soft_skills': {
+                        'soft_skills_one': soft_skills_one,
+                        'soft_skills_two': soft_skills_two,
+                        'soft_skills_three': soft_skills_three,
+                        'soft_skills_four': soft_skills_four
+                    },
+                    'accordance': {
+                        'accordance_one': accordance_one,
+                        'accordance_two': accordance_two,
+                        'accordance_three': accordance_three,
+                        'accordance_four': accordance_four
+                    }
                 }
             }
         )
@@ -245,33 +229,11 @@ class TeamViewSet(viewsets.ModelViewSet):
     filterset_fields = ('name',)
 
     def get_serializer_class(self):
-        if self.request.method == 'get':
+        if self.request.method == 'GET':
             return TeamSerializer
+        if self.request.method == 'PUT':
+            return UpdateTeamSerializer
         return TeamWriteSerializer
-
-    @action(url_path='update_user', methods=['put'], detail=True)
-    def update_user(self, request, pk):
-        team = Team.objects.get(id=pk)
-        serializer = UpdateUserTeamSerializer(
-            team, context={'request': request}, data=request.data
-        )
-        serializer.is_valid(raise_exception=True)
-        user_in_team = serializer.validated_data.get('user_in_team')
-        new_user = serializer.validated_data.get('new_user')
-        team.employees.remove(user_in_team)
-        team.employees.add(new_user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(url_path='create_user', methods=['post'], detail=True)
-    def create_user(self, request, pk):
-        team = Team.objects.get(id=pk)
-        serializer = CreateDeleteUserTeamSerilalizer(
-            team, context={'request': request}, data=request.data
-        )
-        serializer.is_valid(raise_exception=True)
-        new_user = serializer.validated_data.get('user')
-        team.employees.add(new_user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(url_path='delete_user', methods=['delete'], detail=True)
     def delete_user(self, request, pk):
