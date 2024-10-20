@@ -51,7 +51,6 @@ python manage.py createsuperuser
 python manage.py import_csv file_name.csv --model_name model
 ```
 Если проект запущен через docker compose:
-
 * *В терминале необходимо прописать команду:
 ```
 docker compose exec backend import_csv file_name.csv --model_name model
