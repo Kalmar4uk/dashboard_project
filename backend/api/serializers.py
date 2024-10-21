@@ -207,16 +207,22 @@ class TeamSerializer(serializers.ModelSerializer):
             if skills is None:
                 skills = 0
             average.append(skills)
+        if not average:
+            return 0
         result = round(sum(average)/len(average), 2)
         return result
 
     def get_stress_level(self, obj):
         '''По команде'''
-        users = self.find_users_or_skills_avg(obj)
+        employees = self.find_users_or_skills_avg(obj)
+        employees_in_team = employees.count()
+        if not employees_in_team:
+            return 0
         overall_stress_level = 0
-        for user in users:
-            overall_stress_level += STRESS_LVL_USER[user.teams.count()]
-        return round(overall_stress_level / users.count(), 2)
+        for employee in employees:
+            employee_commands = employee.teams.count()
+            overall_stress_level += STRESS_LVL_USER[employee_commands]
+        return round(overall_stress_level / employees_in_team, 2)
 
     def get_average_hard_skills(self, obj):
         competence = 'Hard skills'
@@ -244,8 +250,9 @@ class TeamWriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         employees = validated_data.pop('employees')
         team = Team.objects.create(**validated_data)
-        for emoliyee in employees:
-            User.objects.filter(id=emoliyee.id).update(team=team)
+        for employee in employees:
+            employee_for_team = User.objects.get(id=employee.id)
+            team.employees.add(employee_for_team.id)
         return team
 
     def to_representation(self, instance):
