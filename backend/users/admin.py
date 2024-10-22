@@ -58,7 +58,7 @@ class UserAdmin(UserAdmin):
         ),
     )
     readonly_fields = ('date_accession',)
-    search_fields = ('email',)
+    search_fields = ('first_name', 'last_name')
     ordering = ('date_accession',)
 
 
