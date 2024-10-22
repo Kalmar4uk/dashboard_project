@@ -22,7 +22,7 @@ urlpatterns = [
     path('login/', APIToken.as_view(), name='token_create'),
     path('logout/', DeleteAPIToken.as_view(), name='token_delete'),
     path(
-        'users/set_password/',
+        'employees/set_password/',
         UpdateUserPassword.as_view(),
         name='update_password'
     ),

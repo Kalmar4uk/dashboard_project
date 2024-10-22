@@ -16,6 +16,7 @@ from users.models import Team
 
 from .filters import UserInTeamFilter
 from .paginations import EmployeePagination
+from .permissions import AdminOrReadOnlyPermission
 from .serializers import (CreateDeleteUserTeamSerilalizer,
                           DevelopmentSerializer, EmployeeSerializer,
                           EmployeeSkillsSerializer, SkillSerializer,
@@ -79,6 +80,7 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
 class EmployViewSet(UserAndEmployViewSet):
     queryset = User.objects.filter(employee=True)
     serializer_class = EmployeeSerializer
+    permission_classes = (AdminOrReadOnlyPermission,)
     http_method_names = ('get', 'put', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = UserInTeamFilter
@@ -217,6 +219,7 @@ class UpdateUserPassword(APIView):
 
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skills.objects.all()
+    permission_classes = (AdminOrReadOnlyPermission,)
     serializer_class = SkillSerializer
     http_method_names = ('get', 'post', 'put', 'delete')
 
@@ -224,6 +227,7 @@ class SkillViewSet(viewsets.ModelViewSet):
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+    permission_classes = (AdminOrReadOnlyPermission,)
     http_method_names = ('get', 'post', 'put', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name',)
@@ -272,11 +276,13 @@ class TeamViewSet(viewsets.ModelViewSet):
 class DevelopmentViewSet(viewsets.ModelViewSet):
     queryset = IndividualDevelopmentPlan.objects.all()
     serializer_class = DevelopmentSerializer
+    permission_classes = (AdminOrReadOnlyPermission,)
     http_method_names = ('get', 'post', 'put', 'delete')
 
 
 class EmployeeSkillsViewSet(viewsets.ModelViewSet):
     queryset = EmployeeSkills.objects.all()
     serializer_class = EmployeeSkillsSerializer
+    permission_classes = (AdminOrReadOnlyPermission,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('user', 'appreciated')
