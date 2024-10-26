@@ -4,13 +4,13 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from competencies.models import EmployeeSkills, MinScoreByGrade, Skills
-from users.models import Team, User
+from users.models import Team, Employee
 
 PATH_TO_FILE = f'{settings.BASE_DIR}/data/'
 
 MODELS = {
     'Team': Team,
-    'User': User,
+    'Employee': Employee,
     'Skills': Skills,
     'Employeeskills': EmployeeSkills,
     'Minscore': MinScoreByGrade
@@ -53,7 +53,7 @@ class Command(BaseCommand):
             ) as csvfile:
                 reader = csv.DictReader(csvfile)
                 for data in reader:
-                    user = User.objects.get(id=data.get('user_id'))
+                    user = Employee.objects.get(id=data.get('user_id'))
                     team = Team.objects.get(id=data.get('team_id'))
                     team.employees.add(user)
                 self.stdout.write(

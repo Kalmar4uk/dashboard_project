@@ -43,6 +43,10 @@ class APIToken(APIView):
         )
         return Response(
             {
+                'user': {
+                    'name': user.first_name + ' ' + user.last_name,
+                    'email': user.email
+                },
                 'access': str(refresh.access_token),
                 'refresh': str(refresh)
             },
