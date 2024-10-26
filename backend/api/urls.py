@@ -20,9 +20,10 @@ v1_router.register('employees', EmployViewSet, basename='employees')
 
 urlpatterns = [
     path('login/', APIToken.as_view(), name='token_create'),
-    path('logout/', DeleteAPIToken.as_view(), name='token_delete'),
+    path('users/login/', APIToken.as_view(), name='authorized'),
+    path('users/logout/', DeleteAPIToken.as_view(), name='token_delete'),
     path(
-        'employees/set_password/',
+        'users/set_password/',
         UpdateUserPassword.as_view(),
         name='update_password'
     ),
