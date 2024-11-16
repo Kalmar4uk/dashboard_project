@@ -34,5 +34,20 @@ class SkillsAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(MinScoreByGrade)
+class MinScoreAdmin(admin.ModelAdmin):
+    list_display = (
+        'job_title',
+        'grade',
+        'competence',
+        'min_score'
+    )
+    list_filter = (
+        'job_title',
+        'grade',
+        'min_score',
+        'competence'
+    )
+
+
 admin.site.register(IndividualDevelopmentPlan)
-admin.site.register(MinScoreByGrade)

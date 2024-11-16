@@ -2,37 +2,30 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import Team, User
+from .models import Team, User, Employee
 
 
-class UserInlines(admin.TabularInline):
+class EmployeeInlines(admin.TabularInline):
     model = Team.employees.through
 
 
 class TeamInlines(admin.TabularInline):
-    model = User.teams.through
+    model = Employee.teams.through
 
 
 @admin.register(User)
 class UserAdmin(UserAdmin):
-    inlines = (TeamInlines,)
     model = User
     list_display = (
         'email',
         'first_name',
         'last_name',
-        'job_title',
-        'date_accession',
     )
-    list_filter = ('job_title', 'grade')
     fieldsets = (
         (None, {'fields': (
             'email', 'password',
         )}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name')}),
-        ('Работа', {'fields': (
-            'grade', 'job_title', 'date_accession', 'employee'
-            )}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'image')}),
         (_('Permissions'), {
             'fields': ('is_active', 'is_superuser', 'is_staff')
             }),
@@ -47,9 +40,6 @@ class UserAdmin(UserAdmin):
                     'password2',
                     'first_name',
                     'last_name',
-                    'job_title',
-                    'grade',
-                    'employee',
                     'is_superuser',
                     'is_staff',
                     'is_active'
@@ -57,14 +47,13 @@ class UserAdmin(UserAdmin):
             }
         ),
     )
-    readonly_fields = ('date_accession',)
-    search_fields = ('first_name', 'last_name')
-    ordering = ('date_accession',)
+    ordering = ('id',)
+    search_fields = ('email', 'first_name', 'last_name')
 
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    inlines = (UserInlines,)
+    inlines = (EmployeeInlines,)
     list_display = (
         'name',
         'create_date',
@@ -74,3 +63,20 @@ class TeamAdmin(admin.ModelAdmin):
             'name', 'create_date'
         )}),)
     readonly_fields = ('create_date',)
+
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    inlines = (TeamInlines,)
+    model = Employee
+    list_display = (
+        'email',
+        'first_name',
+        'last_name',
+        'job_title',
+        'date_accession',
+    )
+    list_filter = ('job_title', 'grade')
+    readonly_fields = ('date_accession',)
+    search_fields = ('email', 'first_name', 'last_name')
+    ordering = ('date_accession',)

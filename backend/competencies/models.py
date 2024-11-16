@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from users.models import Employee
+
 User = get_user_model()
 
 
@@ -23,13 +25,13 @@ class Skills(models.Model):
 class EmployeeSkills(models.Model):
     '''Модель навыков сотрудника.'''
     user = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.CASCADE,
         verbose_name='Сотрудник',
         related_name='user_employeeskills'
     )
     appreciated = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Оценивший',
@@ -81,7 +83,7 @@ class MinScoreByGrade(models.Model):
 class IndividualDevelopmentPlan(models.Model):
     '''Модель индивидуального плана развития.'''
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name='Сотрудник'
+        Employee, on_delete=models.CASCADE, verbose_name='Сотрудник'
     )
     target = models.CharField('Цель', max_length=50)
     start_date = models.DateField('Дата начала')
