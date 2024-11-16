@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from users.models import Team, User
+from users.models import Team, Employee
 
 
 class UserInTeamFilter(filters.FilterSet):
@@ -11,5 +11,5 @@ class UserInTeamFilter(filters.FilterSet):
     )
 
     class Meta:
-        model = User
+        model = Employee
         fields = ('first_name', 'last_name', 'team', 'job_title', 'grade')

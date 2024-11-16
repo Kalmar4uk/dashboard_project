@@ -1,39 +1,39 @@
-name,domen
-Asana,Hard skills
-C++,Hard skills
-Clickhouse,Hard skills
-CorelDraw,Hard skills
-Java,Hard skills
-Jira,Hard skills
-Linux,Hard skills
-MacOS,Hard skills
-ML,Hard skills
-MS SQL Server,Hard skills
-MySQL,Hard skills
-Pandas,Hard skills
-PhotoShop,Hard skills
-Python,Hard skills
-Seaborn,Hard skills
-Trello,Hard skills
-Windows,Hard skills
-Английский язык,Hard skills
-Граммотная письменная речь,Soft skills
-Делегирование,Soft skills
-Деловая переписка,Soft skills
-Китайский язык,Hard skills
-Креативное мышление,Soft skills
-Критическое мышление,Soft skills
-Межличностные навыки,Soft skills
-Менторство,Soft skills
-Навыки работы с технической документацией и разрешением технических проблем у пользователей.,Hard skills
-Обратная связь,Soft skills
-Ораторское искусство,Soft skills
-Планирование,Soft skills
-Принятие решения,Soft skills
-Разработка веб-приложений,Hard skills
-Разработка мобильных приложений Android,Hard skills
-Разработка мобильных приложений iOS,Hard skills
-Решение проблем,Soft skills
-Соблюдение сроков,Soft skills
-Управление проектом,Soft skills
-Эмоциональный интеллект,Soft skills
+id,name,domen
+1,Asana,Hard skills
+2,C++,Hard skills
+3,Clickhouse,Hard skills
+4,CorelDraw,Hard skills
+5,Java,Hard skills
+6,Jira,Hard skills
+7,Linux,Hard skills
+8,MacOS,Hard skills
+9,ML,Hard skills
+10,MS SQL Server,Hard skills
+11,MySQL,Hard skills
+12,Pandas,Hard skills
+13,PhotoShop,Hard skills
+14,Python,Hard skills
+15,Seaborn,Hard skills
+16,Trello,Hard skills
+17,Windows,Hard skills
+18,Английский язык,Hard skills
+19,Граммотная письменная речь,Soft skills
+20,Делегирование,Soft skills
+21,Деловая переписка,Soft skills
+22,Китайский язык,Hard skills
+23,Креативное мышление,Soft skills
+24,Критическое мышление,Soft skills
+25,Межличностные навыки,Soft skills
+26,Менторство,Soft skills
+27,Навыки работы с технической документацией и разрешением технических проблем у пользователей.,Hard skills
+28,Обратная связь,Soft skills
+29,Ораторское искусство,Soft skills
+30,Планирование,Soft skills
+31,Принятие решения,Soft skills
+32,Разработка веб-приложений,Hard skills
+33,Разработка мобильных приложений Android,Hard skills
+34,Разработка мобильных приложений iOS,Hard skills
+35,Решение проблем,Soft skills
+36,Соблюдение сроков,Soft skills
+37,Управление проектом,Soft skills
+38,Эмоциональный интеллект,Soft skills

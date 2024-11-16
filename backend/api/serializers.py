@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
                                  MinScoreByGrade, Skills, User)
-from users.models import Team
+from users.models import Team, Employee
 
 from .constants import GRADE, JOB_TITLE, STRESS_LVL_USER
 from .validators import validate_first_and_last_name
@@ -84,10 +84,9 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'coef_conformity',
             'stress_level',
             'teams',
-            'date_accession',
-            'employee'
+            'date_accession'
         )
-        model = User
+        model = Employee
 
     def get_hard_skills(self, user, skill):
         competence = user.user_employeeskills.all()
@@ -135,7 +134,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return round(accordance_true / accordance_all.count(), 2)
 
     def get_stress_level(self, obj):
-        '''По сотруднику'''
         teams_user = obj.teams.count()
         if teams_user == 0:
             return 0
@@ -158,7 +156,7 @@ class UserSerializerForTeam(EmployeeSerializer):
             'coef_conformity',
             'bus_factor'
         )
-        model = User
+        model = Employee
 
     def get_bus_factor(self, obj):
         lvl_skills = self.get_competence(obj)
@@ -237,7 +235,7 @@ class TeamSerializer(serializers.ModelSerializer):
 
 class TeamWriteSerializer(serializers.ModelSerializer):
     employees = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True
+        queryset=Employee.objects.all(), many=True
     )
 
     class Meta:
@@ -251,7 +249,7 @@ class TeamWriteSerializer(serializers.ModelSerializer):
         employees = validated_data.pop('employees')
         team = Team.objects.create(**validated_data)
         for employee in employees:
-            employee_for_team = User.objects.get(id=employee.id)
+            employee_for_team = Employee.objects.get(id=employee.id)
             team.employees.add(employee_for_team.id)
         return team
 
@@ -263,7 +261,7 @@ class TeamWriteSerializer(serializers.ModelSerializer):
 
 class UpdateUserTeamSerializer(serializers.Serializer):
     user_in_team = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
+        queryset=Employee.objects.all()
     )
     new_user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all()
@@ -315,7 +313,7 @@ class UpdateUserTeamSerializer(serializers.Serializer):
 
 class CreateDeleteUserTeamSerilalizer(serializers.Serializer):
     user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all()
+        queryset=Employee.objects.all()
     )
 
     class Meta:
@@ -355,7 +353,7 @@ class CreateDeleteUserTeamSerilalizer(serializers.Serializer):
 class DevelopmentSerializer(serializers.ModelSerializer):
     '''Сериализатор индивидуального плана развития.'''
     employee = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
+        queryset=Employee.objects.all(),
         source='user',
     )
     low_skills = serializers.ListField(

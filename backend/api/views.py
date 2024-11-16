@@ -1,6 +1,7 @@
 from datetime import date
 
-from django.db.models import Avg, Q
+from django.db.models import Avg, Count, Q, Func
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -9,10 +10,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 from competencies.models import (EmployeeSkills, IndividualDevelopmentPlan,
                                  Skills, User)
-from users.models import Team
+from users.models import Team, Employee
 
 from .filters import UserInTeamFilter
 from .paginations import EmployeePagination
@@ -44,7 +46,7 @@ class APIToken(APIView):
         return Response(
             {
                 'user': {
-                    'name': user.first_name + ' ' + user.last_name,
+                    'name': f'{user.first_name} {user.last_name}',
                     'email': user.email
                 },
                 'access': str(refresh.access_token),
@@ -57,23 +59,18 @@ class APIToken(APIView):
 class DeleteAPIToken(APIView):
 
     def post(self, request):
-        refresh_token = request.data.get('refresh_token')
-        if not refresh_token:
-            return Response(
-                {'not_refresh_token': 'Не предоставлен refresh token'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        token = RefreshToken(refresh_token)
-        token.blacklist()
+        tokens = OutstandingToken.objects.filter(user=request.user)
+        for token in tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserAndEmployViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
-        user = User.objects.filter(
+        user = Employee.objects.filter(
             id=self.kwargs.get('pk')
-            ).update(is_active=False)
+            ).update(is_deleted=True)
         if user:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -82,9 +79,8 @@ class UserAndEmployViewSet(viewsets.ModelViewSet):
 
 
 class EmployViewSet(UserAndEmployViewSet):
-    queryset = User.objects.filter(employee=True)
+    queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
     http_method_names = ('get', 'put', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = UserInTeamFilter
@@ -98,7 +94,7 @@ class EmployViewSet(UserAndEmployViewSet):
 
     @action(url_path='analytics', detail=True)
     def users_analytics(self, request, pk):
-        user = User.objects.get(id=pk)
+        user = Employee.objects.get(id=pk)
         analytics = EmployeeSkills.objects.filter(
             user=user
         )
@@ -179,9 +175,7 @@ class EmployViewSet(UserAndEmployViewSet):
             ).count() / accordance_four_all.count()
         except Exception:
             accordance_four = None
-
-        return Response(
-            {
+        result = {
                 'analytics': {
                     'hard_skills': {
                         'hard_skills_one': hard_skills_one,
@@ -203,7 +197,7 @@ class EmployViewSet(UserAndEmployViewSet):
                     }
                 }
             }
-        )
+        return Response(result)
 
 
 class UpdateUserPassword(APIView):
